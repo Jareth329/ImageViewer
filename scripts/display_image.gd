@@ -15,6 +15,7 @@ extends TextureRect
 #	locking rotation/zoom/pan	(& freezing?)
 #	flipping image horizontally/vertically
 #	rotating image
+#	toggling filter
 
 # will probably need to use one of 
 # OS.get_cmdline_args() -> PackedStringArray
@@ -36,7 +37,7 @@ var lock_rotation:bool = false
 var zoom_point:bool = false
 var zoom_step:float = 0.1
 var zoom_speed:float = 1.0
-var zoom_min:float = 0.05
+var zoom_min:float = 0.0
 var zoom_max:float = 16
 enum pan_modes { FREE, DAMPENED, CONSTRAINED }
 var pan_mode:int = pan_modes.DAMPENED
