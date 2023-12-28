@@ -1,0 +1,34 @@
+[gd_scene load_steps=4 format=3 uid="uid://creb6b8g4cbfk"]
+
+[ext_resource type="Script" path="res://scripts/display_image.gd" id="1_jbsgo"]
+[ext_resource type="Texture2D" uid="uid://cxydgt6hkj6xy" path="res://assets/icon.svg" id="2_vvx85"]
+
+[sub_resource type="ViewportTexture" id="ViewportTexture_fc6ti"]
+viewport_path = NodePath("viewport")
+
+[node name="display_image" type="TextureRect"]
+offset_right = 40.0
+offset_bottom = 40.0
+mouse_filter = 0
+texture = SubResource("ViewportTexture_fc6ti")
+expand_mode = 1
+stretch_mode = 6
+script = ExtResource("1_jbsgo")
+
+[node name="viewport" type="SubViewport" parent="."]
+transparent_bg = true
+handle_input_locally = false
+size = Vector2i(2560, 1440)
+render_target_update_mode = 4
+
+[node name="viewport_image" type="TextureRect" parent="viewport"]
+offset_right = 2560.0
+offset_bottom = 1440.0
+mouse_filter = 2
+texture = ExtResource("2_vvx85")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="viewport_camera" type="Camera2D" parent="viewport"]
+position = Vector2(1280, 720)
+ignore_rotation = false
