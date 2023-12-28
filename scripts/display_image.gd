@@ -4,6 +4,7 @@ extends TextureRect
 # (I might add a freeze_ variant to prevent changing those values at all)
 
 # initialization variables
+const default_image:CompressedTexture2D = preload("res://assets/icon.svg")
 @onready var image:TextureRect = $viewport/viewport_image
 @onready var camera:Camera2D = $viewport/viewport_camera
 var default_zoom:Vector2
@@ -22,19 +23,21 @@ enum pan_modes { FREE, DAMPENED, CONSTRAINED }
 var pan_mode:int = pan_modes.DAMPENED
 var pan_speed:float = 1.0
 var pan_step:float = 0.4
-var pan_constraint_w:int = 640
-var pan_constraint_h:int = 360
+var pan_constraint_w:int = 1280
+var pan_constraint_h:int = 720
 var pan_dampen_start:float = 0.90
 
 # variables
 var panning:bool = false
 
-# functions
+# initialization functions
 func _ready() -> void:
 	self.gui_input.connect(_on_gui_input)
 	default_offset = camera.offset
 	default_zoom = camera.zoom
+	get_tree().root.files_dropped.connect(_files_dropped)
 
+# ui functions
 func _on_gui_input(event:InputEvent) -> void:
 	if event is InputEventMouseButton:
 		if not event.pressed:
@@ -109,3 +112,16 @@ func pan(relative_position:Vector2) -> void:
 	
 	camera.offset -= rot_offset
 	camera.offset = lerp(camera.offset, camera.offset - rot_offset, pan_step)
+
+# api functions
+func _files_dropped(paths:PackedStringArray) -> void:
+	# ignore extra paths for now
+	change_image(paths[0])
+
+func change_image(path:String) -> void:
+	if not FileAccess.file_exists(path): return
+	var img:Image = Image.new()
+	var err:int = img.load(path)
+	if err != OK: return
+	var tex:ImageTexture = ImageTexture.create_from_image(img)
+	image.texture = tex
