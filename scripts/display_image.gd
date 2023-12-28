@@ -3,6 +3,19 @@ extends TextureRect
 # the lock_ bools can be used to prevent resetting parts of the camera state when r-click is pressed
 # (I might add a freeze_ variant to prevent changing those values at all)
 
+# I have verified how viewport works in this context; viewport size dictates the resolution available, but if 
+# the user zooms in then a smaller portion of the image is visible and is effectively at a higher resolution
+# which is to say that I can just set the viewport size to ~4k or so to cover the upper end of monitors and
+# that should be fine; I could also set it to the size of program window, and adjust it if resized
+
+# I have also verified that aspect ratio seems to have no impact, so the only current issue is that the speed of
+# panning is dependent on viewport resolution and is way too fast at small resolutions
+
+# need to add buttons for:
+#	locking rotation/zoom/pan	(& freezing?)
+#	flipping image horizontally/vertically
+#	rotating image
+
 # initialization variables
 const default_image:CompressedTexture2D = preload("res://assets/icon.svg")
 @onready var viewport:SubViewport = $viewport
@@ -26,7 +39,7 @@ var pan_speed:float = 1.0
 var pan_step:float = 0.4
 var pan_constraint_w:float = 1280
 var pan_constraint_h:float = 720
-var pan_dampen_start:float = 0.90
+var pan_dampen_start:float = 0.75
 
 # variables
 var panning:bool = false
@@ -126,6 +139,7 @@ func _files_dropped(paths:PackedStringArray) -> void:
 func change_image(path:String) -> void:
 	if not FileAccess.file_exists(path): return
 	var img:Image = Image.new()
+	# Image.load_from_file() does not return an error and still creates a new Image object anyways
 	var err:int = img.load(path)
 	if err != OK: return
 	var tex:ImageTexture = ImageTexture.create_from_image(img)
