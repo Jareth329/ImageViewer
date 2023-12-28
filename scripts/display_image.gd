@@ -1,5 +1,8 @@
 extends TextureRect
 
+# the lock_ bools can be used to prevent resetting parts of the camera state when r-click is pressed
+# (I might add a freeze_ variant to prevent changing those values at all)
+
 # initialization variables
 @onready var image:TextureRect = $viewport/viewport_image
 @onready var camera:Camera2D = $viewport/viewport_camera
@@ -16,7 +19,7 @@ var zoom_speed:float = 1.0
 var zoom_min:float = 0.05
 var zoom_max:float = 16
 enum pan_modes { FREE, DAMPENED, CONSTRAINED }
-var pan_mode:int = pan_modes.CONSTRAINED
+var pan_mode:int = pan_modes.DAMPENED
 var pan_speed:float = 1.0
 var pan_step:float = 0.4
 var pan_constraint_w:int = 640
