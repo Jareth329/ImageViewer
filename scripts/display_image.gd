@@ -22,6 +22,8 @@ extends TextureRect
 # OS.get_cmdline_user_args() -> PackedStringArray
 # to use as proper viewer; think need release build to test though
 
+# for use as an asset; would be better to define viewport size as an export variable
+
 # initialization variables
 const default_image:CompressedTexture2D = preload("res://assets/icon.svg")
 @onready var viewport:SubViewport = $viewport
@@ -37,11 +39,11 @@ var lock_rotation:bool = false
 var zoom_point:bool = false
 var zoom_step:float = 0.1
 var zoom_speed:float = 1.0
-var zoom_min:float = 0.0
-var zoom_max:float = 16
+var zoom_min:float = 0.1
+var zoom_max:float = 64
 enum pan_modes { FREE, DAMPENED, CONSTRAINED }
 var pan_mode:int = pan_modes.DAMPENED
-var pan_speed:float = 1.0
+var pan_speed:float = 0.3
 var pan_step:float = 0.4
 var pan_constraint_w:float = 1280
 var pan_constraint_h:float = 720
@@ -52,6 +54,7 @@ var rotation_step:float = 0.4
 # variables
 var panning:bool = false
 var rotating:bool = false
+var zooming:bool = false
 
 # initialization functions
 func _ready() -> void:
@@ -65,14 +68,14 @@ func _ready() -> void:
 	pan_constraint_h = camera.position.y
 
 # ui functions
-# alternative method
-#func _unhandled_input(event:InputEvent) -> void:
-	#if event is InputEventKey:
-		#if not event.pressed:
-			#rotating = false
-			#return
-		#if event.keycode == KEY_SHIFT:
-			#rotating = true
+func _unhandled_input(event:InputEvent) -> void:
+	if event is InputEventKey:
+		if not event.pressed: return
+		if event.keycode == KEY_F5 or event.key_code == KEY_R:
+			# reset camera state
+			if not lock_zoom: camera.zoom = default_zoom
+			if not lock_pan: camera.offset = default_offset
+			if not lock_rotation: camera.rotation = 0
 
 func _on_gui_input(event:InputEvent) -> void:
 	if event is InputEventMouseButton:
@@ -80,6 +83,7 @@ func _on_gui_input(event:InputEvent) -> void:
 			# prevents events from firing twice
 			panning = false
 			rotating = false
+			zooming = false
 			return
 		elif event.button_index == MOUSE_BUTTON_WHEEL_UP:
 			# zooming in
@@ -93,25 +97,34 @@ func _on_gui_input(event:InputEvent) -> void:
 			# activate panning
 			panning = true
 		elif event.button_index == MOUSE_BUTTON_MIDDLE:
+			# activate fast zoom
+			zooming = true
+		elif event.button_index == MOUSE_BUTTON_RIGHT:
 			# activate rotation
 			rotating = true
-		elif event.button_index == MOUSE_BUTTON_RIGHT:
-			# reset camera state
-			if not lock_zoom: camera.zoom = default_zoom
-			if not lock_pan: camera.offset = default_offset
-			if not lock_rotation: camera.rotation = 0
 	elif event is InputEventMouseMotion and panning:
 		# pan
 		pan(event.relative)
 	elif event is InputEventMouseMotion and rotating:
 		# rotate
 		rotate(event.relative)
+	elif event is InputEventMouseMotion and zooming:
+		# fast zoom
+		fast_zoom_to_center(event.relative)
 
 func zoom_to_center(step:float) -> void:
 	var new_step:float = camera.zoom.x * step * zoom_speed
 	var new_zoom:float = camera.zoom.x + new_step
-	new_zoom = clamp(new_zoom, zoom_min, zoom_max)
+	new_zoom = clamp(new_zoom, zoom_min, (zoom_max-zoom_min))
 	camera.zoom = Vector2(new_zoom, new_zoom)
+
+func fast_zoom_to_center(event_position:Vector2) -> void:
+	var zoom_ratio:float = camera.zoom.x / zoom_max
+	var zoom_target:float = camera.zoom.x + (event_position.x * zoom_speed * zoom_ratio)
+	var _zoom_min:Vector2 = Vector2(zoom_min, zoom_min)
+	var _zoom_max:Vector2 = Vector2(zoom_max, zoom_max)
+	var _zoom_target:Vector2 = Vector2(zoom_target, zoom_target)
+	camera.zoom = clamp(lerp(camera.zoom, _zoom_target, zoom_step), _zoom_min, _zoom_max)
 
 func zoom_to_point(step:float, event_position:Vector2) -> void:
 	var new_step:float = camera.zoom.x * step * zoom_speed
