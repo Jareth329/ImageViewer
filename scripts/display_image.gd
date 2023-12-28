@@ -5,6 +5,7 @@ extends TextureRect
 
 # initialization variables
 const default_image:CompressedTexture2D = preload("res://assets/icon.svg")
+@onready var viewport:SubViewport = $viewport
 @onready var image:TextureRect = $viewport/viewport_image
 @onready var camera:Camera2D = $viewport/viewport_camera
 var default_zoom:Vector2
@@ -23,8 +24,8 @@ enum pan_modes { FREE, DAMPENED, CONSTRAINED }
 var pan_mode:int = pan_modes.DAMPENED
 var pan_speed:float = 1.0
 var pan_step:float = 0.4
-var pan_constraint_w:int = 1280
-var pan_constraint_h:int = 720
+var pan_constraint_w:float = 1280
+var pan_constraint_h:float = 720
 var pan_dampen_start:float = 0.90
 
 # variables
@@ -33,9 +34,13 @@ var panning:bool = false
 # initialization functions
 func _ready() -> void:
 	self.gui_input.connect(_on_gui_input)
+	get_tree().root.files_dropped.connect(_files_dropped)
 	default_offset = camera.offset
 	default_zoom = camera.zoom
-	get_tree().root.files_dropped.connect(_files_dropped)
+	image.size = viewport.size
+	camera.position = viewport.size / 2
+	pan_constraint_w = camera.position.x
+	pan_constraint_h = camera.position.y 
 
 # ui functions
 func _on_gui_input(event:InputEvent) -> void:
