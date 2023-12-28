@@ -45,6 +45,8 @@ var pan_step:float = 0.4
 var pan_constraint_w:float = 1280
 var pan_constraint_h:float = 720
 var pan_dampen_start:float = 0.75
+var rotation_speed:float = 0.7
+var rotation_step:float = 0.4
 
 # variables
 var panning:bool = false
@@ -101,8 +103,8 @@ func _on_gui_input(event:InputEvent) -> void:
 		# pan
 		pan(event.relative)
 	elif event is InputEventMouseMotion and rotating:
-		# rotate (simple for now)
-		camera.rotation_degrees += event.relative.x
+		# rotate
+		rotate(event.relative)
 
 func zoom_to_center(step:float) -> void:
 	var new_step:float = camera.zoom.x * step * zoom_speed
@@ -152,6 +154,10 @@ func pan(relative_position:Vector2) -> void:
 	
 	camera.offset -= rot_offset
 	camera.offset = lerp(camera.offset, camera.offset - rot_offset, pan_step)
+
+func rotate(relative_position:Vector2) -> void:
+	var rotation_target:float = camera.rotation_degrees + (relative_position.x * rotation_speed)
+	camera.rotation_degrees = lerp(camera.rotation_degrees, rotation_target, rotation_step)
 
 # api functions
 func _files_dropped(paths:PackedStringArray) -> void:
