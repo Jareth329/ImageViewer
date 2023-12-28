@@ -16,6 +16,11 @@ extends TextureRect
 #	flipping image horizontally/vertically
 #	rotating image
 
+# will probably need to use one of 
+# OS.get_cmdline_args() -> PackedStringArray
+# OS.get_cmdline_user_args() -> PackedStringArray
+# to use as proper viewer; think need release build to test though
+
 # initialization variables
 const default_image:CompressedTexture2D = preload("res://assets/icon.svg")
 @onready var viewport:SubViewport = $viewport
@@ -43,6 +48,7 @@ var pan_dampen_start:float = 0.75
 
 # variables
 var panning:bool = false
+var rotating:bool = false
 
 # initialization functions
 func _ready() -> void:
@@ -53,14 +59,24 @@ func _ready() -> void:
 	image.size = viewport.size
 	camera.position = viewport.size / 2
 	pan_constraint_w = camera.position.x
-	pan_constraint_h = camera.position.y 
+	pan_constraint_h = camera.position.y
 
 # ui functions
+# alternative method
+#func _unhandled_input(event:InputEvent) -> void:
+	#if event is InputEventKey:
+		#if not event.pressed:
+			#rotating = false
+			#return
+		#if event.keycode == KEY_SHIFT:
+			#rotating = true
+
 func _on_gui_input(event:InputEvent) -> void:
 	if event is InputEventMouseButton:
 		if not event.pressed:
 			# prevents events from firing twice
 			panning = false
+			rotating = false
 			return
 		elif event.button_index == MOUSE_BUTTON_WHEEL_UP:
 			# zooming in
@@ -73,6 +89,9 @@ func _on_gui_input(event:InputEvent) -> void:
 		elif event.button_index == MOUSE_BUTTON_LEFT:
 			# activate panning
 			panning = true
+		elif event.button_index == MOUSE_BUTTON_MIDDLE:
+			# activate rotation
+			rotating = true
 		elif event.button_index == MOUSE_BUTTON_RIGHT:
 			# reset camera state
 			if not lock_zoom: camera.zoom = default_zoom
@@ -81,6 +100,9 @@ func _on_gui_input(event:InputEvent) -> void:
 	elif event is InputEventMouseMotion and panning:
 		# pan
 		pan(event.relative)
+	elif event is InputEventMouseMotion and rotating:
+		# rotate (simple for now)
+		camera.rotation_degrees += event.relative.x
 
 func zoom_to_center(step:float) -> void:
 	var new_step:float = camera.zoom.x * step * zoom_speed
