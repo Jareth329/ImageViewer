@@ -60,6 +60,7 @@ var rotation_speed:float = 0.7
 var rotation_step:float = 0.4
 var window_max_x:float = 960
 var window_max_y:float = 720
+var row_size_skip:int = 10
 
 # variables
 var panning:bool = false
@@ -112,6 +113,16 @@ func _unhandled_input(event:InputEvent) -> void:
 			# load next image in folder
 			if curr_index >= file_paths.size() - 1: curr_index = 0
 			else: curr_index += 1
+			change_image(file_paths[curr_index])
+			Signals.update_counter.emit(curr_index + 1, file_paths.size())
+		elif event.keycode == KEY_UP:
+			# skip to prev row_size_skip'th image
+			curr_index = (file_paths.size() + ((curr_index - row_size_skip) + file_paths.size())) % file_paths.size()
+			change_image(file_paths[curr_index])
+			Signals.update_counter.emit(curr_index + 1, file_paths.size())
+		elif event.keycode == KEY_DOWN:
+			# skip to next row_size_skip'th image
+			curr_index = (file_paths.size() + ((curr_index + row_size_skip) - file_paths.size())) % file_paths.size()
 			change_image(file_paths[curr_index])
 			Signals.update_counter.emit(curr_index + 1, file_paths.size())
 		elif event.keycode == KEY_H:
