@@ -5,3 +5,5 @@ func _unhandled_input(event:InputEvent) -> void:
 		if not event.pressed: return
 		if event.keycode == KEY_H:
 			Signals.update_visibility_ui.emit()
+		elif event.keycode == KEY_F8 or event.keycode == KEY_ESCAPE:
+			get_tree().quit()
