@@ -95,14 +95,14 @@ func _unhandled_input(event:InputEvent) -> void:
 			if not lock_zoom: camera.zoom = default_zoom
 			if not lock_pan: camera.offset = default_offset
 			if not lock_rotation: camera.rotation = 0
-		if event.keycode == KEY_LEFT:
+		elif event.keycode == KEY_LEFT:
 			# load previous image in folder
 			if curr_index == 0: curr_index = file_paths.size() - 1
 			elif file_paths.size() < curr_index - 1: return
 			else: curr_index -= 1
 			change_image(file_paths[curr_index])
 			Signals.update_counter.emit(curr_index + 1, file_paths.size())
-		if event.keycode == KEY_RIGHT:
+		elif event.keycode == KEY_RIGHT:
 			# load next image in folder
 			if curr_index >= file_paths.size() - 1: curr_index = 0
 			else: curr_index += 1
