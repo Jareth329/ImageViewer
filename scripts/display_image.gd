@@ -58,6 +58,9 @@ var window_max_y:float = 720
 var panning:bool = false
 var rotating:bool = false
 var zooming:bool = false
+var supported_formats:PackedStringArray = [ "jpg", "jpeg", "png", "bmp", "dds", "ktx", "exr", "hdr", "tga", "svg", "webp" ]
+var file_paths:Array = []
+var curr_index:int = 0
 
 # initialization functions
 func _ready() -> void:
@@ -78,6 +81,7 @@ func _ready() -> void:
 	var args:PackedStringArray = OS.get_cmdline_args()
 	if args.size() > 0:
 		change_image(args[0])
+		create_paths_array(args[0])
 
 # ui functions
 func _unhandled_input(event:InputEvent) -> void:
@@ -88,6 +92,19 @@ func _unhandled_input(event:InputEvent) -> void:
 			if not lock_zoom: camera.zoom = default_zoom
 			if not lock_pan: camera.offset = default_offset
 			if not lock_rotation: camera.rotation = 0
+		if event.keycode == KEY_LEFT:
+			# load previous image in folder
+			if curr_index == 0: curr_index = file_paths.size() - 1
+			elif file_paths.size() < curr_index - 1: return
+			else: curr_index -= 1
+			change_image(file_paths[curr_index])
+			Signals.update_counter.emit(curr_index + 1, file_paths.size())
+		if event.keycode == KEY_RIGHT:
+			# load next image in folder
+			if curr_index >= file_paths.size() - 1: curr_index = 0
+			else: curr_index += 1
+			change_image(file_paths[curr_index])
+			Signals.update_counter.emit(curr_index + 1, file_paths.size())
 
 func _on_gui_input(event:InputEvent) -> void:
 	if event is InputEventMouseButton:
@@ -189,6 +206,7 @@ func rotate(relative_position:Vector2) -> void:
 func _files_dropped(paths:PackedStringArray) -> void:
 	# ignore extra paths for now
 	change_image(paths[0])
+	create_paths_array(paths[0])
 
 func change_image(path:String) -> void:
 	if not FileAccess.file_exists(path): return
@@ -199,8 +217,23 @@ func change_image(path:String) -> void:
 	var tex:ImageTexture = ImageTexture.create_from_image(img)
 	image.texture = tex
 	
-	var res:Vector2 = img.get_size()
-	var max_ratio:float = window_max_x / window_max_y
-	var img_ratio:float = res.x / res.y
-	if res.x > res.y and img_ratio >= max_ratio: get_tree().root.size = Vector2(window_max_x, window_max_x * res.y / res.x)
-	else: get_tree().root.size = Vector2(window_max_y * res.x / res.y, window_max_y)
+	if get_tree().root.mode == Window.MODE_WINDOWED:
+		var res:Vector2 = img.get_size()
+		var max_ratio:float = window_max_x / window_max_y
+		var img_ratio:float = res.x / res.y
+		if res.x > res.y and img_ratio >= max_ratio: get_tree().root.size = Vector2(window_max_x, window_max_x * res.y / res.x)
+		else: get_tree().root.size = Vector2(window_max_y * res.x / res.y, window_max_y)
+
+func create_paths_array(file_path:String) -> void:
+	file_paths.clear()
+	# may need to reset curr_index to 0 here
+	var folder_path:String = file_path.get_base_dir()
+	if not DirAccess.dir_exists_absolute(folder_path): return
+	var files:PackedStringArray = DirAccess.get_files_at(folder_path)
+	var index:int = 0
+	for file in files:
+		if supported_formats.has(file.get_extension().to_lower()):
+			file_paths.append(folder_path.path_join(file))
+			if file_path.get_file() == file: curr_index = index
+			else: index += 1
+	Signals.update_counter.emit(curr_index + 1, file_paths.size())

@@ -1,9 +1,17 @@
-[gd_scene load_steps=3 format=3 uid="uid://cy1viomu6flei"]
+[gd_scene load_steps=6 format=3 uid="uid://cy1viomu6flei"]
 
+[ext_resource type="Script" path="res://scripts/main.gd" id="1_7jfm0"]
 [ext_resource type="PackedScene" uid="uid://creb6b8g4cbfk" path="res://scenes/display_image.tscn" id="1_k2wpq"]
+[ext_resource type="Script" path="res://scripts/counter.gd" id="2_r50gq"]
 
 [sub_resource type="ViewportTexture" id="ViewportTexture_3ee8n"]
 viewport_path = NodePath("viewport")
+
+[sub_resource type="SystemFont" id="SystemFont_voblq"]
+multichannel_signed_distance_field = true
+msdf_pixel_range = 24
+msdf_size = 64
+oversampling = 2.0
 
 [node name="main" type="Control"]
 layout_mode = 3
@@ -13,6 +21,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+script = ExtResource("1_7jfm0")
 
 [node name="margin" type="MarginContainer" parent="."]
 layout_mode = 1
@@ -30,3 +39,24 @@ theme_override_constants/margin_bottom = 0
 [node name="display_image" parent="margin" instance=ExtResource("1_k2wpq")]
 layout_mode = 2
 texture = SubResource("ViewportTexture_3ee8n")
+
+[node name="counter" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -59.0
+offset_top = -40.0
+offset_right = -5.0
+offset_bottom = -5.0
+grow_horizontal = 0
+grow_vertical = 0
+script = ExtResource("2_r50gq")
+
+[node name="label" type="Label" parent="counter"]
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_voblq")
+text = " 999 / 999 "
+horizontal_alignment = 1
