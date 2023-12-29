@@ -60,6 +60,9 @@ var zooming:bool = false
 func _ready() -> void:
 	self.gui_input.connect(_on_gui_input)
 	get_tree().root.files_dropped.connect(_files_dropped)
+	# need to make this a setting the user can toggle; alternatively,
+	# can just put a colorrect in the background and allow user to choose color, including transparent
+	get_tree().root.transparent_bg = true
 	default_offset = camera.offset
 	default_zoom = camera.zoom
 	image.size = viewport.size
