@@ -48,7 +48,7 @@ var pan_speed:float = 0.3
 var pan_step:float = 0.4
 var pan_constraint_w:float = 1280
 var pan_constraint_h:float = 720
-var pan_dampen_start:float = 0.75
+var pan_dampen_start:float = 0.0
 var rotation_speed:float = 0.7
 var rotation_step:float = 0.4
 var window_max_x:float = 960
@@ -151,7 +151,6 @@ func zoom_to_point(step:float, event_position:Vector2) -> void:
 	camera.offset += new_offset
 	camera.zoom = Vector2(new_zoom, new_zoom)
 
-# panning seems a bit jittery compared to fast_zoom or rotate, unsure why
 func pan(relative_position:Vector2) -> void:
 	var rot:float = camera.rotation
 	var rot_sin:float = sin(rot)
