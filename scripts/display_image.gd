@@ -26,6 +26,13 @@ extends TextureRect
 
 # consider resizing window to match image aspect ratio
 
+# will likely add a naturalSort setting option for ordering image paths once I move to csharp
+
+# could also add UP/DOWN arrows as a skip option and allow user to define 'row' length; to skip say 10 at once
+
+# should probably add a toggle key + setting to have scroll switch between zoom and skipping to next image,
+#	maybe even default it to next image since there is alt way of zooming now
+
 # initialization variables
 @onready var viewport:SubViewport = $viewport
 @onready var image:TextureRect = $viewport/viewport_image
@@ -95,6 +102,8 @@ func _unhandled_input(event:InputEvent) -> void:
 			if not lock_zoom: camera.zoom = default_zoom
 			if not lock_pan: camera.offset = default_offset
 			if not lock_rotation: camera.rotation = 0
+			image.flip_h = false
+			image.flip_v = false
 		elif event.keycode == KEY_LEFT:
 			# load previous image in folder
 			if curr_index == 0: curr_index = file_paths.size() - 1
