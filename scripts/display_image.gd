@@ -253,7 +253,8 @@ func create_paths_array(file_path:String) -> void:
 	# may need to reset curr_index to 0 here
 	var folder_path:String = file_path.get_base_dir()
 	if not DirAccess.dir_exists_absolute(folder_path): return
-	var files:PackedStringArray = DirAccess.get_files_at(folder_path)
+	var files:Array = DirAccess.get_files_at(folder_path)
+	files.sort_custom(Signals.SortNatural.sort_natural)
 	var index:int = 0
 	for file in files:
 		if supported_formats.has(file.get_extension().to_lower()):
@@ -261,3 +262,4 @@ func create_paths_array(file_path:String) -> void:
 			if file_path.get_file() == file: curr_index = index
 			else: index += 1
 	Signals.update_counter.emit(curr_index + 1, file_paths.size())
+
