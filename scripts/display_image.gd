@@ -71,7 +71,7 @@ func _ready() -> void:
 func _unhandled_input(event:InputEvent) -> void:
 	if event is InputEventKey:
 		if not event.pressed: return
-		if event.keycode == KEY_F5 or event.key_code == KEY_R:
+		if event.keycode == KEY_F5 or event.keycode == KEY_R:
 			# reset camera state
 			if not lock_zoom: camera.zoom = default_zoom
 			if not lock_pan: camera.offset = default_offset
