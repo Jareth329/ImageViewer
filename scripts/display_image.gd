@@ -25,7 +25,6 @@ extends TextureRect
 # for use as an asset; would be better to define viewport size as an export variable
 
 # initialization variables
-const default_image:CompressedTexture2D = preload("res://assets/icon.svg")
 @onready var viewport:SubViewport = $viewport
 @onready var image:TextureRect = $viewport/viewport_image
 @onready var camera:Camera2D = $viewport/viewport_camera
