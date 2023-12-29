@@ -5,7 +5,8 @@ var borderless:bool = false
 func _ready() -> void:
 	# need to make this a setting the user can toggle; alternatively,
 	# can just put a colorrect in the background and allow user to choose color, including transparent
-	get_tree().root.transparent_bg = true
+	# get_tree().root.transparent_bg = true
+	pass
 
 func _unhandled_input(event:InputEvent) -> void:
 	if event is InputEventKey:
