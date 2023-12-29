@@ -239,6 +239,7 @@ func change_image(path:String) -> void:
 	if err != OK: return
 	var tex:ImageTexture = ImageTexture.create_from_image(img)
 	image.texture = tex
+	get_tree().root.title = "ImageViewer  -  %s" % [path.get_file()]
 	
 	if get_tree().root.mode == Window.MODE_WINDOWED:
 		var res:Vector2 = img.get_size()
