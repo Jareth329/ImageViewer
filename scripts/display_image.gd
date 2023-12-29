@@ -24,6 +24,8 @@ extends TextureRect
 
 # for use as an asset; would be better to define viewport size as an export variable
 
+# consider resizing window to match image aspect ratio
+
 # initialization variables
 @onready var viewport:SubViewport = $viewport
 @onready var image:TextureRect = $viewport/viewport_image
@@ -68,6 +70,12 @@ func _ready() -> void:
 	camera.position = viewport.size / 2
 	pan_constraint_w = camera.position.x
 	pan_constraint_h = camera.position.y
+	
+	# so this works; should likely iterate it until it succeeds in loading an image
+	# can have change_image return an error to check
+	var args:PackedStringArray = OS.get_cmdline_args()
+	if args.size() > 0:
+		change_image(args[0])
 
 # ui functions
 func _unhandled_input(event:InputEvent) -> void:
@@ -141,6 +149,7 @@ func zoom_to_point(step:float, event_position:Vector2) -> void:
 	camera.offset += new_offset
 	camera.zoom = Vector2(new_zoom, new_zoom)
 
+# panning seems a bit jittery compared to fast_zoom or rotate, unsure why
 func pan(relative_position:Vector2) -> void:
 	var rot:float = camera.rotation
 	var rot_sin:float = sin(rot)
