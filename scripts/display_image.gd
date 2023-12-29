@@ -1,15 +1,9 @@
 extends TextureRect
 
-# the lock_ bools can be used to prevent resetting parts of the camera state when r-click is pressed
-# (I might add a freeze_ variant to prevent changing those values at all)
-
-# I have verified how viewport works in this context; viewport size dictates the resolution available, but if 
-# the user zooms in then a smaller portion of the image is visible and is effectively at a higher resolution
-# which is to say that I can just set the viewport size to ~4k or so to cover the upper end of monitors and
-# that should be fine; I could also set it to the size of program window, and adjust it if resized
-
-# I have also verified that aspect ratio seems to have no impact, so the only current issue is that the speed of
-# panning is dependent on viewport resolution and is way too fast at small resolutions
+# viewport size dictates the resolution available, but if the user zooms in then a smaller portion of 
+# the image is visible and is effectively at a higher resolution -- which is to say that I can just 
+# set the viewport size to ~4k or so to cover the upper end of monitors and that should be fine; I 
+# could also set it to the size of program window, and adjust it if resized
 
 # need to add buttons for:
 #	locking rotation/zoom/pan	(& freezing?)
@@ -23,12 +17,6 @@ extends TextureRect
 # to use as proper viewer; think need release build to test though
 
 # for use as an asset; would be better to define viewport size as an export variable
-
-# consider resizing window to match image aspect ratio
-
-# will likely add a naturalSort setting option for ordering image paths once I move to csharp
-
-# could also add UP/DOWN arrows as a skip option and allow user to define 'row' length; to skip say 10 at once
 
 # should probably add a toggle key + setting to have scroll switch between zoom and skipping to next image,
 #	maybe even default it to next image since there is alt way of zooming now
