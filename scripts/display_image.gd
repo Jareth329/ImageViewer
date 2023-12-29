@@ -51,6 +51,8 @@ var pan_constraint_h:float = 720
 var pan_dampen_start:float = 0.75
 var rotation_speed:float = 0.7
 var rotation_step:float = 0.4
+var window_max_x:float = 960
+var window_max_y:float = 720
 
 # variables
 var panning:bool = false
@@ -197,3 +199,9 @@ func change_image(path:String) -> void:
 	if err != OK: return
 	var tex:ImageTexture = ImageTexture.create_from_image(img)
 	image.texture = tex
+	
+	var res:Vector2 = img.get_size()
+	var max_ratio:float = window_max_x / window_max_y
+	var img_ratio:float = res.x / res.y
+	if res.x > res.y and img_ratio >= max_ratio: get_tree().root.size = Vector2(window_max_x, window_max_x * res.y / res.x)
+	else: get_tree().root.size = Vector2(window_max_y * res.x / res.y, window_max_y)
