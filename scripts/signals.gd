@@ -21,6 +21,6 @@ class SortNatural:
 				return part_compare(a1[i].get_string(), b1[i].get_string())
 		
 		if len(b1) > len(a1): 
-			return false
-		return true
+			return true
+		return false
 
