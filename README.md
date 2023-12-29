@@ -3,9 +3,9 @@
 ### Controls
 L-mouse : pan
 
-M-mouse : rotate
+M-mouse : fast zoom
 
-R-mouse : reset
+R-mouse : rotate
 
 Scroll : zoom
 
@@ -29,7 +29,9 @@ TAB : toggle ui visibility (currently just counter)
 
 B-key : toggles background transparency
 
-ESC or F8 : exit program
+F5 or R-key : reset camera/flip state
+
+F8 or ESC : exit program
 
 F9 : toggle titlebar visibility
 
