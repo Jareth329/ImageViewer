@@ -246,7 +246,6 @@ func change_image(path:String) -> void:
 
 func create_paths_array(file_path:String) -> void:
 	file_paths.clear()
-	# may need to reset curr_index to 0 here
 	var folder_path:String = file_path.get_base_dir()
 	if not DirAccess.dir_exists_absolute(folder_path): return
 	# this technically works, but it is really ugly
@@ -259,4 +258,3 @@ func create_paths_array(file_path:String) -> void:
 			if file_path.get_file() == file: curr_index = index
 			else: index += 1
 	Signals.update_counter.emit(curr_index + 1, file_paths.size())
-
