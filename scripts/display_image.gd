@@ -250,7 +250,8 @@ func create_paths_array(file_path:String) -> void:
 	# may need to reset curr_index to 0 here
 	var folder_path:String = file_path.get_base_dir()
 	if not DirAccess.dir_exists_absolute(folder_path): return
-	var files:Array = DirAccess.get_files_at(folder_path) # Array[String] != PackedStringArray; unsure what to do here
+	# this technically works, but it is really ugly
+	var files:Array[String] = Array(Array(DirAccess.get_files_at(folder_path)), TYPE_STRING, "", null)
 	files.sort_custom(Signals.SortNatural.sort_natural)
 	var index:int = 0
 	for file:String in files:
