@@ -75,9 +75,12 @@ func _ready() -> void:
 	camera.position = viewport.size / 2
 	pan_constraint_w = camera.position.x
 	pan_constraint_h = camera.position.y
-	
-	# so this works; should likely iterate it until it succeeds in loading an image
-	# can have change_image return an error to check
+	get_tree().root.ready.connect(_load_cmdline_image)
+
+func _load_cmdline_image() -> void:
+	# trying to open multiple images at once opens multiple instances, which is inline with other 
+	# image viewers and ensures this code will work fine in correct use cases, just need to add 
+	# popup for error images and remove their path from the array
 	var args:PackedStringArray = OS.get_cmdline_args()
 	if args.size() > 0:
 		change_image(args[0])

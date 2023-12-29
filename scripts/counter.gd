@@ -1,7 +1,5 @@
 extends PanelContainer
 
-# counter does not display correctly on the first opened image when opened directly from file explorer
-
 @onready var label:Label = $label
 
 func _ready() -> void:
