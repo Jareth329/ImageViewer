@@ -108,6 +108,17 @@ func _unhandled_input(event:InputEvent) -> void:
 			else: curr_index += 1
 			change_image(file_paths[curr_index])
 			Signals.update_counter.emit(curr_index + 1, file_paths.size())
+		elif event.keycode == KEY_H:
+			# flip image horizontally
+			image.flip_h = not image.flip_h
+		elif event.keycode == KEY_V:
+			# flip image vertically
+			image.flip_v = not image.flip_v
+		elif event.keycode == KEY_F:
+			# toggle filter
+			if image.texture_filter == TEXTURE_FILTER_NEAREST:
+				image.texture_filter = TEXTURE_FILTER_LINEAR
+			else: image.texture_filter = TEXTURE_FILTER_NEAREST 
 
 func _on_gui_input(event:InputEvent) -> void:
 	if event is InputEventMouseButton:
