@@ -4,7 +4,6 @@ signal update_counter(value, max_value)
 signal update_visibility_ui
 
 class SortNatural:
-	static var table:Dictionary = {} # string : RegExMatch[]
 	static var regex_num:RegEx = RegEx.create_from_string("([0-9]+)")
 	
 	static func part_compare(a:String, b:String) -> bool:
@@ -14,17 +13,8 @@ class SortNatural:
 	
 	static func sort_natural(a:String, b:String) -> bool:
 		if a == b: return false
-		var a1:Array
-		var b1:Array
-		
-		if table.has(a): a1 = table[a]
-		else:
-			a1 = regex_num.search_all(a)
-			table[a] = a1
-		if table.has(b): b1 = table[b]
-		else:
-			b1 = regex_num.search_all(b)
-			table[b] = b1
+		var a1:Array = regex_num.search_all(a)
+		var b1:Array = regex_num.search_all(b)
 		
 		for i in min(len(a1), len(b1)):
 			if a1[i].get_string() != b1[i].get_string():
