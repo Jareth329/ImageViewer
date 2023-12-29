@@ -15,13 +15,19 @@ H-key : toggle image horizontal flip
 
 F-key : toggle image filter (nearest / linear)
 
-L-arrowkey : change to previous image in current folder
+Left-arrowkey : change to previous image in current folder
 
-R-arrowkey : change to next image in current folder
+Right-arrowkey : change to next image in current folder
+
+Up-arrowkey : change to nth previous image (10 by default)
+
+Down-arrowkey : change to nth next image (10 by default)
 
 > arrowkeys will both loop back to other side when end is reached
 
 TAB : toggle ui visibility (currently just counter)
+
+B-key : toggles background transparency
 
 ESC or F8 : exit program
 
