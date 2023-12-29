@@ -60,6 +60,7 @@ var rotation_speed:float = 0.7
 var rotation_step:float = 0.4
 var window_max_x:float = 960
 var window_max_y:float = 720
+var window_size_percent:float = 0.75
 var row_size_skip:int = 10
 
 # variables
@@ -81,6 +82,10 @@ func _ready() -> void:
 	pan_constraint_w = camera.position.x
 	pan_constraint_h = camera.position.y
 	get_tree().root.ready.connect(_load_cmdline_image)
+	
+	var screen_size:Vector2 = DisplayServer.screen_get_size()
+	window_max_x = screen_size.x * window_size_percent
+	window_max_y = screen_size.y * window_size_percent
 
 func _load_cmdline_image() -> void:
 	# trying to open multiple images at once opens multiple instances, which is inline with other 
