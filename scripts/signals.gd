@@ -1,6 +1,6 @@
 extends Node
 
-signal update_counter(value, max_value)
+signal update_counter(value:int, max_value:int)
 signal update_visibility_ui
 
 class SortNatural:
@@ -13,10 +13,10 @@ class SortNatural:
 	
 	static func sort_natural(a:String, b:String) -> bool:
 		if a == b: return false
-		var a1:Array = regex_num.search_all(a)
-		var b1:Array = regex_num.search_all(b)
+		var a1:Array[RegExMatch] = regex_num.search_all(a)
+		var b1:Array[RegExMatch] = regex_num.search_all(b)
 		
-		for i in min(len(a1), len(b1)):
+		for i:int in min(len(a1), len(b1)):
 			if a1[i].get_string() != b1[i].get_string():
 				return part_compare(a1[i].get_string(), b1[i].get_string())
 		

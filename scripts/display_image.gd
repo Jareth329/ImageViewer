@@ -66,7 +66,7 @@ var panning:bool = false
 var rotating:bool = false
 var zooming:bool = false
 var supported_formats:PackedStringArray = [ "jpg", "jpeg", "png", "bmp", "dds", "ktx", "exr", "hdr", "tga", "svg", "webp" ]
-var file_paths:Array = []
+var file_paths:Array[String] = []
 var curr_index:int = 0
 
 # initialization functions
@@ -250,10 +250,10 @@ func create_paths_array(file_path:String) -> void:
 	# may need to reset curr_index to 0 here
 	var folder_path:String = file_path.get_base_dir()
 	if not DirAccess.dir_exists_absolute(folder_path): return
-	var files:Array = DirAccess.get_files_at(folder_path)
+	var files:Array = DirAccess.get_files_at(folder_path) # Array[String] != PackedStringArray; unsure what to do here
 	files.sort_custom(Signals.SortNatural.sort_natural)
 	var index:int = 0
-	for file in files:
+	for file:String in files:
 		if supported_formats.has(file.get_extension().to_lower()):
 			file_paths.append(folder_path.path_join(file))
 			if file_path.get_file() == file: curr_index = index
