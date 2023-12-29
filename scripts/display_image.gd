@@ -11,11 +11,6 @@ extends TextureRect
 #	rotating image
 #	toggling filter
 
-# will probably need to use one of 
-# OS.get_cmdline_args() -> PackedStringArray
-# OS.get_cmdline_user_args() -> PackedStringArray
-# to use as proper viewer; think need release build to test though
-
 # for use as an asset; would be better to define viewport size as an export variable
 
 # should probably add a toggle key + setting to have scroll switch between zoom and skipping to next image,
