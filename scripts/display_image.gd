@@ -84,32 +84,14 @@ func _load_cmdline_image() -> void:
 func _unhandled_input(event:InputEvent) -> void:
 	if event is InputEventKey:
 		if not event.pressed: return
-		if event.keycode == KEY_F5 or event.keycode == KEY_R:
-			# reset camera state
-			reset_state()
-		elif event.keycode == KEY_LEFT:
-			# load previous image in folder
-			prev_image(1)
-		elif event.keycode == KEY_RIGHT:
-			# load next image in folder
-			next_image(1)
-		elif event.keycode == KEY_UP:
-			# skip to prev row_size_skip'th image
-			prev_image(row_size_skip)
-		elif event.keycode == KEY_DOWN:
-			# skip to next row_size_skip'th image
-			next_image(row_size_skip)
-		elif event.keycode == KEY_H:
-			# flip image horizontally
-			image.flip_h = not image.flip_h
-		elif event.keycode == KEY_V:
-			# flip image vertically
-			image.flip_v = not image.flip_v
-		elif event.keycode == KEY_F:
-			# toggle filter
-			if image.texture_filter == TEXTURE_FILTER_NEAREST:
-				image.texture_filter = TEXTURE_FILTER_LINEAR
-			else: image.texture_filter = TEXTURE_FILTER_NEAREST 
+		if event.keycode == KEY_F5 or event.keycode == KEY_R: reset_camera_state()
+		elif event.keycode == KEY_LEFT: prev_image(1)
+		elif event.keycode == KEY_RIGHT: next_image(1)
+		elif event.keycode == KEY_UP: prev_image(row_size_skip)
+		elif event.keycode == KEY_DOWN: next_image(row_size_skip)
+		elif event.keycode == KEY_H: image.flip_h = not image.flip_h
+		elif event.keycode == KEY_V: image.flip_v = not image.flip_v
+		elif event.keycode == KEY_F: toggle_filter()
 
 func _on_gui_input(event:InputEvent) -> void:
 	if event is InputEventMouseButton:
@@ -135,24 +117,12 @@ func _on_gui_input(event:InputEvent) -> void:
 			else:
 				# load next image in folder
 				next_image(1)
-		elif event.button_index == MOUSE_BUTTON_LEFT:
-			# activate panning
-			panning = true
-		elif event.button_index == MOUSE_BUTTON_MIDDLE:
-			# activate fast zoom
-			zooming = true
-		elif event.button_index == MOUSE_BUTTON_RIGHT:
-			# activate rotation
-			rotating = true
-	elif event is InputEventMouseMotion and panning:
-		# pan
-		pan(event.relative)
-	elif event is InputEventMouseMotion and rotating:
-		# rotate
-		rotate(event.relative)
-	elif event is InputEventMouseMotion and zooming:
-		# fast zoom
-		fast_zoom_to_center(event.relative)
+		elif event.button_index == MOUSE_BUTTON_LEFT: panning = true
+		elif event.button_index == MOUSE_BUTTON_MIDDLE: zooming = true
+		elif event.button_index == MOUSE_BUTTON_RIGHT: rotating = true
+	elif event is InputEventMouseMotion and panning: pan(event.relative)
+	elif event is InputEventMouseMotion and rotating: rotate(event.relative)
+	elif event is InputEventMouseMotion and zooming: fast_zoom_to_center(event.relative)
 
 func zoom_to_center(step:float) -> void:
 	var new_step:float = camera.zoom.x * step * zoom_speed
@@ -215,7 +185,7 @@ func rotate(relative_position:Vector2) -> void:
 	var rotation_target:float = camera.rotation_degrees + (relative_position.x * rotation_speed)
 	camera.rotation_degrees = lerp(camera.rotation_degrees, rotation_target, rotation_step)
 
-# api functions
+# functions
 func _files_dropped(paths:PackedStringArray) -> void:
 	# ignore extra paths for now
 	change_image(paths[0])
@@ -265,9 +235,14 @@ func next_image(nth_image:int) -> void:
 	change_image(file_paths[curr_index])
 	Signals.update_counter.emit(curr_index + 1, file_paths.size())
 
-func reset_state() -> void:
+func reset_camera_state() -> void:
 	if not lock_zoom: camera.zoom = default_zoom
 	if not lock_pan: camera.offset = default_offset
 	if not lock_rotation: camera.rotation = 0
 	image.flip_h = false
 	image.flip_v = false
+
+func toggle_filter() -> void:
+	if image.texture_filter == TEXTURE_FILTER_NEAREST:
+		image.texture_filter = TEXTURE_FILTER_LINEAR
+	else: image.texture_filter = TEXTURE_FILTER_NEAREST 
