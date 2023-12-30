@@ -230,7 +230,7 @@ func _files_dropped(paths:PackedStringArray) -> void:
 func change_image(path:String) -> void:
 	if not FileAccess.file_exists(path): return
 	var img:Image = Image.new()
-	# Image.load_from_file() does not return an error and still creates a new Image object anyways
+	# this gives an error, but the error is nonsensical for my use case
 	var err:int = img.load(path)
 	if err != OK: return
 	var tex:ImageTexture = ImageTexture.create_from_image(img)

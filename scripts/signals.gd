@@ -11,12 +11,12 @@ class SortNatural:
 			return a < b
 		return a.to_int() < b.to_int()
 	
-	static func split(str:String, matches:Array[RegExMatch]) -> Array[String]:
+	static func split(string:String, matches:Array[RegExMatch]) -> Array[String]:
 		var arr:Array[String] = []
 		var start:int = 0
 		for mat:RegExMatch in matches:
 			if start < mat.get_start(): # string first
-				arr.append(str.substr(start, mat.get_start() - start))
+				arr.append(string.substr(start, mat.get_start() - start))
 			arr.append(mat.get_string())
 			start = mat.get_end()
 		return arr
