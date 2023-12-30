@@ -4,7 +4,7 @@
 - Left Mouse : pan
 - Middle Mouse : fast zoom
 - Right Mouse : rotate
-- Scroll : zoom
+- Scroll : change images / (zoom if bool changed)
 ---
 - Tab : toggle ui visibility (currently just counter)
 - B-key : toggles background transparency
