@@ -86,34 +86,19 @@ func _unhandled_input(event:InputEvent) -> void:
 		if not event.pressed: return
 		if event.keycode == KEY_F5 or event.keycode == KEY_R:
 			# reset camera state
-			if not lock_zoom: camera.zoom = default_zoom
-			if not lock_pan: camera.offset = default_offset
-			if not lock_rotation: camera.rotation = 0
-			image.flip_h = false
-			image.flip_v = false
+			reset_state()
 		elif event.keycode == KEY_LEFT:
 			# load previous image in folder
-			if curr_index == 0: curr_index = file_paths.size() - 1
-			elif file_paths.size() < curr_index - 1: return
-			else: curr_index -= 1
-			change_image(file_paths[curr_index])
-			Signals.update_counter.emit(curr_index + 1, file_paths.size())
+			prev_image(1)
 		elif event.keycode == KEY_RIGHT:
 			# load next image in folder
-			if curr_index >= file_paths.size() - 1: curr_index = 0
-			else: curr_index += 1
-			change_image(file_paths[curr_index])
-			Signals.update_counter.emit(curr_index + 1, file_paths.size())
+			next_image(1)
 		elif event.keycode == KEY_UP:
 			# skip to prev row_size_skip'th image
-			curr_index = (file_paths.size() + ((curr_index - row_size_skip) + file_paths.size())) % file_paths.size()
-			change_image(file_paths[curr_index])
-			Signals.update_counter.emit(curr_index + 1, file_paths.size())
+			prev_image(row_size_skip)
 		elif event.keycode == KEY_DOWN:
 			# skip to next row_size_skip'th image
-			curr_index = (file_paths.size() + ((curr_index + row_size_skip) - file_paths.size())) % file_paths.size()
-			change_image(file_paths[curr_index])
-			Signals.update_counter.emit(curr_index + 1, file_paths.size())
+			next_image(row_size_skip)
 		elif event.keycode == KEY_H:
 			# flip image horizontally
 			image.flip_h = not image.flip_h
@@ -141,11 +126,7 @@ func _on_gui_input(event:InputEvent) -> void:
 				else: zoom_to_center(zoom_step)
 			else:
 				# load previous image in folder
-				if curr_index == 0: curr_index = file_paths.size() - 1
-				elif file_paths.size() < curr_index - 1: return
-				else: curr_index -= 1
-				change_image(file_paths[curr_index])
-				Signals.update_counter.emit(curr_index + 1, file_paths.size())
+				prev_image(1)
 		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
 			if scroll_wheel_zooms:
 				# zooming out
@@ -153,10 +134,7 @@ func _on_gui_input(event:InputEvent) -> void:
 				else: zoom_to_center(-zoom_step)
 			else:
 				# load next image in folder
-				if curr_index >= file_paths.size() - 1: curr_index = 0
-				else: curr_index += 1
-				change_image(file_paths[curr_index])
-				Signals.update_counter.emit(curr_index + 1, file_paths.size())
+				next_image(1)
 		elif event.button_index == MOUSE_BUTTON_LEFT:
 			# activate panning
 			panning = true
@@ -274,3 +252,22 @@ func create_paths_array(file_path:String) -> void:
 			if file_path.get_file() == file: curr_index = index
 			else: index += 1
 	Signals.update_counter.emit(curr_index + 1, file_paths.size())
+
+func prev_image(nth_image:int) -> void:
+	# skip to prev nth image
+	curr_index = (file_paths.size() + ((curr_index - nth_image) + file_paths.size())) % file_paths.size()
+	change_image(file_paths[curr_index])
+	Signals.update_counter.emit(curr_index + 1, file_paths.size())
+
+func next_image(nth_image:int) -> void:
+	# skip to next nth image
+	curr_index = (file_paths.size() + ((curr_index + nth_image) - file_paths.size())) % file_paths.size()
+	change_image(file_paths[curr_index])
+	Signals.update_counter.emit(curr_index + 1, file_paths.size())
+
+func reset_state() -> void:
+	if not lock_zoom: camera.zoom = default_zoom
+	if not lock_pan: camera.offset = default_offset
+	if not lock_rotation: camera.rotation = 0
+	image.flip_h = false
+	image.flip_v = false
