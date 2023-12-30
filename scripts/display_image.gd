@@ -250,7 +250,7 @@ func create_paths_array(file_path:String) -> void:
 	if not DirAccess.dir_exists_absolute(folder_path): return
 	# this technically works, but it is really ugly
 	var files:Array[String] = Array(Array(DirAccess.get_files_at(folder_path)), TYPE_STRING, "", null)
-	files.sort_custom(Signals.SortNatural.sort_natural)
+	files.sort_custom(Signals.SortNatural.sort)
 	var index:int = 0
 	for file:String in files:
 		if supported_formats.has(file.get_extension().to_lower()):
