@@ -46,6 +46,8 @@ var window_max_x:float = 960
 var window_max_y:float = 720
 var window_size_percent:float = 0.75
 var row_size_skip:int = 10
+var use_history:bool = false
+var history_max_size:int = 10
 
 # variables
 var panning:bool = false
@@ -54,6 +56,8 @@ var zooming:bool = false
 var supported_formats:PackedStringArray = [ "jpg", "jpeg", "png", "bmp", "dds", "ktx", "exr", "hdr", "tga", "svg", "webp" ]
 var file_paths:Array[String] = []
 var curr_index:int = 0
+var history:Dictionary = {} # String : ImageTexture
+var history_queue:Array[String] = []
 
 # initialization functions
 func _ready() -> void:
@@ -192,17 +196,22 @@ func _files_dropped(paths:PackedStringArray) -> void:
 	create_paths_array(paths[0])
 
 func change_image(path:String) -> void:
-	if not FileAccess.file_exists(path): return
-	var img:Image = Image.new()
-	# this gives an error, but the error is nonsensical for my use case
-	var err:int = img.load(path)
-	if err != OK: return
-	var tex:ImageTexture = ImageTexture.create_from_image(img)
-	image.texture = tex
+	if use_history and history.has(path):
+		image.texture = history[path]
+	else:
+		if not FileAccess.file_exists(path): return
+		var img:Image = Image.new()
+		# this gives an error, but the error is nonsensical for my use case
+		var err:int = img.load(path)
+		if err != OK: return
+		var tex:ImageTexture = ImageTexture.create_from_image(img)
+		image.texture = tex
+		if use_history: 
+			add_to_history(path, tex)
 	get_tree().root.title = "ImageViewer  -  %s" % [path.get_file()]
 	
 	if get_tree().root.mode == Window.MODE_WINDOWED:
-		var res:Vector2 = img.get_size()
+		var res:Vector2 = image.texture.get_image().get_size()
 		var max_ratio:float = window_max_x / window_max_y
 		var img_ratio:float = res.x / res.y
 		if res.x > res.y and img_ratio >= max_ratio: get_tree().root.size = Vector2(window_max_x, window_max_x * res.y / res.x)
@@ -246,3 +255,10 @@ func toggle_filter() -> void:
 	if image.texture_filter == TEXTURE_FILTER_NEAREST:
 		image.texture_filter = TEXTURE_FILTER_LINEAR
 	else: image.texture_filter = TEXTURE_FILTER_NEAREST 
+
+func add_to_history(path:String, tex:ImageTexture) -> void:
+	if history_queue.size() >= history_max_size:
+		var oldest_path:String = history_queue.pop_front()
+		history.erase(oldest_path)
+	history[path] = tex
+	history_queue.push_back(path)
