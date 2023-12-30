@@ -24,6 +24,7 @@ var default_zoom:Vector2
 var default_offset:Vector2
 
 # settings variables
+var scroll_wheel_zooms:bool = false
 var lock_zoom:bool = false
 var lock_pan:bool = false
 var lock_rotation:bool = false
@@ -134,13 +135,28 @@ func _on_gui_input(event:InputEvent) -> void:
 			zooming = false
 			return
 		elif event.button_index == MOUSE_BUTTON_WHEEL_UP:
-			# zooming in
-			if zoom_point: zoom_to_point(zoom_step, event.position)
-			else: zoom_to_center(zoom_step)
+			if scroll_wheel_zooms:
+				# zooming in
+				if zoom_point: zoom_to_point(zoom_step, event.position)
+				else: zoom_to_center(zoom_step)
+			else:
+				# load previous image in folder
+				if curr_index == 0: curr_index = file_paths.size() - 1
+				elif file_paths.size() < curr_index - 1: return
+				else: curr_index -= 1
+				change_image(file_paths[curr_index])
+				Signals.update_counter.emit(curr_index + 1, file_paths.size())
 		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-			# zooming out
-			if zoom_point: zoom_to_point(-zoom_step, event.position)
-			else: zoom_to_center(-zoom_step)
+			if scroll_wheel_zooms:
+				# zooming out
+				if zoom_point: zoom_to_point(-zoom_step, event.position)
+				else: zoom_to_center(-zoom_step)
+			else:
+				# load next image in folder
+				if curr_index >= file_paths.size() - 1: curr_index = 0
+				else: curr_index += 1
+				change_image(file_paths[curr_index])
+				Signals.update_counter.emit(curr_index + 1, file_paths.size())
 		elif event.button_index == MOUSE_BUTTON_LEFT:
 			# activate panning
 			panning = true
