@@ -17,9 +17,9 @@ extends TextureRect
 #	maybe even default it to next image since there is alt way of zooming now
 
 # initialization variables
-@onready var viewport:SubViewport = $viewport
-@onready var image:TextureRect = $viewport/viewport_image
-@onready var camera:Camera2D = $viewport/viewport_camera
+@onready var viewport:SubViewport = $viewport as SubViewport
+@onready var image:TextureRect = $viewport/viewport_image as TextureRect
+@onready var camera:Camera2D = $viewport/viewport_camera as Camera2D
 var default_zoom:Vector2
 var default_offset:Vector2
 
@@ -131,7 +131,7 @@ func _on_gui_input(event:InputEvent) -> void:
 func zoom_to_center(step:float) -> void:
 	var new_step:float = camera.zoom.x * step * zoom_speed
 	var new_zoom:float = camera.zoom.x + new_step
-	new_zoom = clamp(new_zoom, zoom_min, (zoom_max-zoom_min))
+	new_zoom = clampf(new_zoom, zoom_min, (zoom_max-zoom_min))
 	camera.zoom = Vector2(new_zoom, new_zoom)
 
 func fast_zoom_to_center(event_position:Vector2) -> void:
@@ -140,12 +140,12 @@ func fast_zoom_to_center(event_position:Vector2) -> void:
 	var _zoom_min:Vector2 = Vector2(zoom_min, zoom_min)
 	var _zoom_max:Vector2 = Vector2(zoom_max, zoom_max)
 	var _zoom_target:Vector2 = Vector2(zoom_target, zoom_target)
-	camera.zoom = clamp(lerp(camera.zoom, _zoom_target, zoom_step), _zoom_min, _zoom_max)
+	camera.zoom = camera.zoom.lerp(_zoom_target, zoom_step).clamp(_zoom_min, _zoom_max)
 
 func zoom_to_point(step:float, event_position:Vector2) -> void:
 	var new_step:float = camera.zoom.x * step * zoom_speed
 	var new_zoom:float = camera.zoom.x + new_step
-	new_zoom = clamp(new_zoom, zoom_min, zoom_max)
+	new_zoom = clampf(new_zoom, zoom_min, zoom_max)
 	# this part needs fixed
 	#var direction:int = -1 if new_step < 0 else 1
 	#var ratio:Vector2 = self.size / viewport_image.size
@@ -174,20 +174,20 @@ func pan(relative_position:Vector2) -> void:
 	# restricts pan from leaving predefined constraints; gradually reduces pan speed to 0 near perimeter
 	if pan_mode == pan_modes.DAMPENED:
 		if rot_offset.x > 0 and camera.offset.x <= (-pan_constraint_w * pan_dampen_start):
-			rot_offset.x *= 1 - (max(0, abs(camera.offset.x) / pan_constraint_w))
+			rot_offset.x *= 1 - (maxf(0, absf(camera.offset.x) / pan_constraint_w))
 		elif rot_offset.x < 0 and camera.offset.x >= (pan_constraint_w * pan_dampen_start):
-			rot_offset.x *= 1 - (max(0, abs(camera.offset.x) / pan_constraint_w))
+			rot_offset.x *= 1 - (maxf(0, absf(camera.offset.x) / pan_constraint_w))
 		if rot_offset.y > 0 and camera.offset.y <= (-pan_constraint_h * pan_dampen_start):
-			rot_offset.y *= 1 - (max(0, abs(camera.offset.y) / pan_constraint_h))
+			rot_offset.y *= 1 - (maxf(0, absf(camera.offset.y) / pan_constraint_h))
 		elif rot_offset.y < 0 and camera.offset.y >= (pan_constraint_h * pan_dampen_start):
-			rot_offset.y *= 1 - (max(0, abs(camera.offset.y) / pan_constraint_h))
+			rot_offset.y *= 1 - (maxf(0, absf(camera.offset.y) / pan_constraint_h))
 	
 	camera.offset -= rot_offset
-	camera.offset = lerp(camera.offset, camera.offset - rot_offset, pan_step)
+	camera.offset = camera.offset.lerp(camera.offset - rot_offset, pan_step)
 
 func rotate(relative_position:Vector2) -> void:
 	var rotation_target:float = camera.rotation_degrees + (relative_position.x * rotation_speed)
-	camera.rotation_degrees = lerp(camera.rotation_degrees, rotation_target, rotation_step)
+	camera.rotation_degrees = lerpf(camera.rotation_degrees, rotation_target, rotation_step)
 
 # functions
 func _files_dropped(paths:PackedStringArray) -> void:
@@ -197,6 +197,7 @@ func _files_dropped(paths:PackedStringArray) -> void:
 
 func change_image(path:String) -> void:
 	if use_history and history.has(path):
+		# anything related to accessing Dictionary is currently not type safe 
 		image.texture = history[path]
 	else:
 		if not FileAccess.file_exists(path): return
@@ -222,7 +223,7 @@ func create_paths_array(file_path:String) -> void:
 	var folder_path:String = file_path.get_base_dir()
 	if not DirAccess.dir_exists_absolute(folder_path): return
 	# this technically works, but it is really ugly
-	var files:Array[String] = Array(Array(DirAccess.get_files_at(folder_path)), TYPE_STRING, "", null)
+	var files:Array[String] = Array(Array(DirAccess.get_files_at(folder_path)), TYPE_STRING, "", null) as Array[String]
 	files.sort_custom(Signals.SortNatural.sort)
 	var index:int = 0
 	for file:String in files:
@@ -258,7 +259,10 @@ func toggle_filter() -> void:
 
 func add_to_history(path:String, tex:ImageTexture) -> void:
 	if history_queue.size() >= history_max_size:
+		# does not seem possible to fix type checking; think it is because pop_front() can return null
+		# even assigning it to a temp Variant and checking against null does not fix the type checking though
 		var oldest_path:String = history_queue.pop_front()
 		history.erase(oldest_path)
+	# anything related to accessing Dictionary is currently not type safe 
 	history[path] = tex
 	history_queue.push_back(path)

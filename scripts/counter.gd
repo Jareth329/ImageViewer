@@ -1,6 +1,6 @@
 extends PanelContainer
 
-@onready var label:Label = $label
+@onready var label:Label = $label as Label
 
 func _ready() -> void:
 	Signals.update_counter.connect(_update_counter)

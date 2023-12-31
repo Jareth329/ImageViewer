@@ -30,11 +30,10 @@ class SortNatural:
 		var a2:Array[String] = split(a, a1)
 		var b2:Array[String] = split(b, b1)
 		
-		for i:int in min(a2.size(), b2.size()):
+		for i:int in mini(a2.size(), b2.size()):
 			if a2[i] != b2[i]:
 				return compare(a2[i], b2[i])
-
+		
 		if len(b1) > len(a1): 
 			return true
 		return false
-
