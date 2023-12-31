@@ -87,46 +87,50 @@ func _load_cmdline_image() -> void:
 # ui functions
 func _unhandled_input(event:InputEvent) -> void:
 	if event is InputEventKey:
-		if not event.pressed: return
-		if event.keycode == KEY_F5 or event.keycode == KEY_R: reset_camera_state()
-		elif event.keycode == KEY_LEFT: prev_image(1)
-		elif event.keycode == KEY_RIGHT: next_image(1)
-		elif event.keycode == KEY_UP: prev_image(row_size_skip)
-		elif event.keycode == KEY_DOWN: next_image(row_size_skip)
-		elif event.keycode == KEY_H: image.flip_h = not image.flip_h
-		elif event.keycode == KEY_V: image.flip_v = not image.flip_v
-		elif event.keycode == KEY_F: toggle_filter()
+		var ev:InputEventKey = event as InputEventKey
+		if not ev.pressed: return
+		if ev.keycode == KEY_F5 or ev.keycode == KEY_R: reset_camera_state()
+		elif ev.keycode == KEY_LEFT: prev_image(1)
+		elif ev.keycode == KEY_RIGHT: next_image(1)
+		elif ev.keycode == KEY_UP: prev_image(row_size_skip)
+		elif ev.keycode == KEY_DOWN: next_image(row_size_skip)
+		elif ev.keycode == KEY_H: image.flip_h = not image.flip_h
+		elif ev.keycode == KEY_V: image.flip_v = not image.flip_v
+		elif ev.keycode == KEY_F: toggle_filter()
 
 func _on_gui_input(event:InputEvent) -> void:
 	if event is InputEventMouseButton:
-		if not event.pressed:
+		var ev:InputEventMouseButton = event as InputEventMouseButton
+		if not ev.pressed:
 			# prevents events from firing twice
 			panning = false
 			rotating = false
 			zooming = false
 			return
-		elif event.button_index == MOUSE_BUTTON_WHEEL_UP:
+		elif ev.button_index == MOUSE_BUTTON_WHEEL_UP:
 			if scroll_wheel_zooms:
 				# zooming in
-				if zoom_point: zoom_to_point(zoom_step, event.position)
+				if zoom_point: zoom_to_point(zoom_step, ev.position)
 				else: zoom_to_center(zoom_step)
 			else:
 				# load previous image in folder
 				prev_image(1)
-		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+		elif ev.button_index == MOUSE_BUTTON_WHEEL_DOWN:
 			if scroll_wheel_zooms:
 				# zooming out
-				if zoom_point: zoom_to_point(-zoom_step, event.position)
+				if zoom_point: zoom_to_point(-zoom_step, ev.position)
 				else: zoom_to_center(-zoom_step)
 			else:
 				# load next image in folder
 				next_image(1)
-		elif event.button_index == MOUSE_BUTTON_LEFT: panning = true
-		elif event.button_index == MOUSE_BUTTON_MIDDLE: zooming = true
-		elif event.button_index == MOUSE_BUTTON_RIGHT: rotating = true
-	elif event is InputEventMouseMotion and panning: pan(event.relative)
-	elif event is InputEventMouseMotion and rotating: rotate(event.relative)
-	elif event is InputEventMouseMotion and zooming: fast_zoom_to_center(event.relative)
+		elif ev.button_index == MOUSE_BUTTON_LEFT: panning = true
+		elif ev.button_index == MOUSE_BUTTON_MIDDLE: zooming = true
+		elif ev.button_index == MOUSE_BUTTON_RIGHT: rotating = true
+	elif event is InputEventMouseMotion:
+		var ev:InputEventMouseMotion = event as InputEventMouseMotion
+		if panning: pan(ev.relative)
+		elif rotating: rotate(ev.relative)
+		elif zooming: fast_zoom_to_center(ev.relative)
 
 func zoom_to_center(step:float) -> void:
 	var new_step:float = camera.zoom.x * step * zoom_speed
@@ -197,7 +201,7 @@ func _files_dropped(paths:PackedStringArray) -> void:
 
 func change_image(path:String) -> void:
 	if use_history and history.has(path):
-		# anything related to accessing Dictionary is currently not type safe 
+		# anything related to accessing Dictionary is Variant only
 		image.texture = history[path]
 	else:
 		if not FileAccess.file_exists(path): return
@@ -215,6 +219,7 @@ func change_image(path:String) -> void:
 		var res:Vector2 = image.texture.get_image().get_size()
 		var max_ratio:float = window_max_x / window_max_y
 		var img_ratio:float = res.x / res.y
+		# could use 1 / img_ratio for if and img_ratio for else; but it makes code less clear; especially for if statement
 		if res.x > res.y and img_ratio >= max_ratio: get_tree().root.size = Vector2(window_max_x, window_max_x * res.y / res.x)
 		else: get_tree().root.size = Vector2(window_max_y * res.x / res.y, window_max_y)
 
@@ -263,6 +268,6 @@ func add_to_history(path:String, tex:ImageTexture) -> void:
 		# even assigning it to a temp Variant and checking against null does not fix the type checking though
 		var oldest_path:String = history_queue.pop_front()
 		history.erase(oldest_path)
-	# anything related to accessing Dictionary is currently not type safe 
+	# anything related to accessing Dictionary is Variant only
 	history[path] = tex
 	history_queue.push_back(path)

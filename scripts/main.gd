@@ -10,19 +10,20 @@ func _ready() -> void:
 
 func _unhandled_input(event:InputEvent) -> void:
 	if event is InputEventKey:
+		var ev:InputEventKey = event as InputEventKey
 		# the type checking can be fixed with (event as InputEventKey).pressed, but that is really ugly
-		if not event.pressed: return
-		if event.keycode == KEY_TAB:
+		if not ev.pressed: return
+		if ev.keycode == KEY_TAB:
 			Signals.update_visibility_ui.emit()
-		elif event.keycode == KEY_F9:
+		elif ev.keycode == KEY_F9:
 			_update_titlebar_visibility()
-		elif event.keycode == KEY_F8 or event.keycode == KEY_ESCAPE:
+		elif ev.keycode == KEY_F8 or ev.keycode == KEY_ESCAPE:
 			get_tree().quit()
-		elif event.keycode == KEY_F11:
+		elif ev.keycode == KEY_F11:
 			_set_window_mode(Window.MODE_FULLSCREEN)
-		elif event.keycode == KEY_F10:
+		elif ev.keycode == KEY_F10:
 			_set_window_mode(Window.MODE_MAXIMIZED)
-		elif event.keycode == KEY_B:
+		elif ev.keycode == KEY_B:
 			_toggle_background_transparency()
 
 func _toggle_background_transparency() -> void:
