@@ -264,9 +264,10 @@ func toggle_filter() -> void:
 
 func add_to_history(path:String, tex:ImageTexture) -> void:
 	if history_queue.size() >= history_max_size:
-		# does not seem possible to fix type checking; think it is because pop_front() can return null
-		# even assigning it to a temp Variant and checking against null does not fix the type checking though
-		var oldest_path:String = history_queue.pop_front()
+		# made type safe by not using the output of pop_front()
+		# should not cause issues as long as I enforce that:	history_max_size = maxi(1, history_max_size)
+		var oldest_path:String = history_queue[0]
+		history_queue.pop_front()
 		history.erase(oldest_path)
 	# anything related to accessing Dictionary is Variant only
 	history[path] = tex
