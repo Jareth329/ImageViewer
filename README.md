@@ -37,3 +37,7 @@
   - can be fixed by manually resizing; likely fixed by changing displayed image as well
 - aspect ratio of image does not always fit window size
   - problematic on maximized/fullscreened/manually_resized windows
+- main problem currently is that godot4 projects have a baseline memory overhead of ~140-180MB; which is really way too much for a program expected
+  to run multiple instances
+  - considering trying to change approach to use multiple windows with only 1 actual instance; main problem with that is how to handle opening multiple
+    images at once in file explorer
