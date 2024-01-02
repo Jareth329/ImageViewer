@@ -157,7 +157,7 @@ func zoom_to_point(step:float, event_position:Vector2) -> void:
 		new_offset *= (zoom_max - camera.zoom.x) / (zoom_max * (pow(1.1 + (camera.zoom.x / zoom_max), 8)))
 	else:
 		# if default zoom or zoomed out; multiply by 1/zoom
-		new_offset *= 1.0 / camera.zoom.x
+		new_offset /= camera.zoom.x
 	
 	# scale offset to reasonable value; invert offset if zooming in
 	new_offset *= 0.25 if step < 0 else -0.25
