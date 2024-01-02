@@ -146,7 +146,6 @@ func fast_zoom_to_center(event_position:Vector2) -> void:
 	var _zoom_target:Vector2 = Vector2(zoom_target, zoom_target)
 	camera.zoom = camera.zoom.lerp(_zoom_target, zoom_step).clamp(_zoom_min, _zoom_max)
 
-# issue: does not take rotation into account; use same logic as pan
 func zoom_to_point(step:float, event_position:Vector2) -> void:
 	var new_step:float = camera.zoom.x * step * zoom_speed
 	var new_zoom:float = camera.zoom.x + new_step
