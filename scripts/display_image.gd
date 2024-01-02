@@ -24,11 +24,11 @@ var default_zoom:Vector2
 var default_offset:Vector2
 
 # settings variables
-var scroll_wheel_zooms:bool = false
+var scroll_wheel_zooms:bool = true
 var lock_zoom:bool = false
 var lock_pan:bool = false
 var lock_rotation:bool = false
-var zoom_point:bool = false
+var zoom_point:bool = true
 var zoom_step:float = 0.1
 var zoom_speed:float = 1.0
 var zoom_min:float = 0.1
@@ -150,12 +150,17 @@ func zoom_to_point(step:float, event_position:Vector2) -> void:
 	var new_step:float = camera.zoom.x * step * zoom_speed
 	var new_zoom:float = camera.zoom.x + new_step
 	new_zoom = clampf(new_zoom, zoom_min, zoom_max)
-	# this part needs fixed
-	#var direction:int = -1 if new_step < 0 else 1
-	#var ratio:Vector2 = self.size / viewport_image.size
-	#var new_offset:Vector2 = (event_position - ((viewport_image.size / 2) * ratio)) * new_step
-	var new_offset:Vector2 = (((self.position + self.size) / 2) - event_position) * -new_step
-	print(new_offset)
+	var new_offset:Vector2 = (((self.position + self.size) / 2) - event_position)
+	
+	if camera.zoom.x > 1.0: 
+		# if zoomed in; normalize based on max zoom; minimize pan at high zoom
+		new_offset *= (zoom_max - camera.zoom.x) / (zoom_max * (pow(1.1 + (camera.zoom.x / zoom_max), 8)))
+	else:
+		# if default zoom or zoomed out; multiply by 1/zoom
+		new_offset *= 1.0 / camera.zoom.x
+	
+	# scale offset to reasonable value; invert offset if zooming in
+	new_offset *= 0.25 if step < 0 else -0.25
 	camera.offset += new_offset
 	camera.zoom = Vector2(new_zoom, new_zoom)
 
@@ -266,6 +271,7 @@ func add_to_history(path:String, tex:ImageTexture) -> void:
 	if history_queue.size() >= history_max_size:
 		# made type safe by not using the output of pop_front()
 		# should not cause issues as long as I enforce that:	history_max_size = maxi(1, history_max_size)
+		# overall might be less performant than original though
 		var oldest_path:String = history_queue[0]
 		history_queue.pop_front()
 		history.erase(oldest_path)

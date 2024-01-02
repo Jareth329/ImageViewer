@@ -11,7 +11,6 @@ func _ready() -> void:
 func _unhandled_input(event:InputEvent) -> void:
 	if event is InputEventKey:
 		var ev:InputEventKey = event as InputEventKey
-		# the type checking can be fixed with (event as InputEventKey).pressed, but that is really ugly
 		if not ev.pressed: return
 		if ev.keycode == KEY_TAB:
 			Signals.update_visibility_ui.emit()
