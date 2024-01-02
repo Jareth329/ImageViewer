@@ -112,17 +112,13 @@ func _on_gui_input(event:InputEvent) -> void:
 				# zooming in
 				if zoom_point: zoom_to_point(zoom_step, ev.position)
 				else: zoom_to_center(zoom_step)
-			else:
-				# load previous image in folder
-				prev_image(1)
+			else: prev_image(1)
 		elif ev.button_index == MOUSE_BUTTON_WHEEL_DOWN:
 			if scroll_wheel_zooms:
 				# zooming out
 				if zoom_point: zoom_to_point(-zoom_step, ev.position)
 				else: zoom_to_center(-zoom_step)
-			else:
-				# load next image in folder
-				next_image(1)
+			else: next_image(1)
 		elif ev.button_index == MOUSE_BUTTON_LEFT: panning = true
 		elif ev.button_index == MOUSE_BUTTON_MIDDLE: zooming = true
 		elif ev.button_index == MOUSE_BUTTON_RIGHT: rotating = true
@@ -150,7 +146,7 @@ func zoom_to_point(step:float, event_position:Vector2) -> void:
 	var new_step:float = camera.zoom.x * step * zoom_speed
 	var new_zoom:float = camera.zoom.x + new_step
 	new_zoom = clampf(new_zoom, zoom_min, zoom_max)
-	var new_offset:Vector2 = (((self.position + self.size) / 2) - event_position)
+	var new_offset:Vector2 = ((self.position + self.size) / 2) - event_position
 	
 	if camera.zoom.x > 1.0: 
 		# if zoomed in; normalize based on max zoom; minimize pan at high zoom
@@ -180,14 +176,14 @@ func pan(relative_position:Vector2) -> void:
 	var zoom_mult:float = (zoom_max / camera.zoom.x) * 0.07
 	var rot_offset:Vector2 = Vector2(rot_mult_x, rot_mult_y) * zoom_mult * pan_speed
 	
-	# restricts pan from leaving predefined constraints; sets the pan speed of an axis at the perimeter to 0
+	# sets the pan speed to 0 at the perimeter
 	if pan_mode == pan_modes.CONSTRAINED:
 		if rot_offset.x > 0 and camera.offset.x <= -pan_constraint_w: rot_offset.x = 0
 		elif rot_offset.x < 0 and camera.offset.x >= pan_constraint_w: rot_offset.x = 0
 		if rot_offset.y > 0 and camera.offset.y <= -pan_constraint_h: rot_offset.y = 0
 		elif rot_offset.y < 0 and camera.offset.y >= pan_constraint_h: rot_offset.y = 0
 	
-	# restricts pan from leaving predefined constraints; gradually reduces pan speed to 0 near perimeter
+	# reduces pan speed with increased distance from center (0 at perimeter)
 	if pan_mode == pan_modes.DAMPENED:
 		if rot_offset.x > 0 and camera.offset.x <= (-pan_constraint_w * pan_dampen_start):
 			rot_offset.x *= 1 - (maxf(0, absf(camera.offset.x) / pan_constraint_w))
@@ -218,7 +214,7 @@ func change_image(path:String) -> void:
 	else:
 		if not FileAccess.file_exists(path): return
 		var img:Image = Image.new()
-		# this gives an error, but the error is nonsensical for my use case
+		# this gives an error, but the error is nonsensical for my use case (non res:// paths)
 		var err:int = img.load(path)
 		if err != OK: return
 		var tex:ImageTexture = ImageTexture.create_from_image(img)
