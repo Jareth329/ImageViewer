@@ -26,6 +26,7 @@
 
 ### Notes
 - rotation and zoom are both relevant to the center of the window, not the center of the image
+  - scroll-wheel zoom currently defaults to zooming towards/from mouse cursor instead of screen center
 - drag and drop an image into program from file system to view it (jpeg/png/bmp/dds/ktx/exr/hdr/tga/svg/webp should have some level of support currently)
   - can also set the program as the 'Open With' program for supported extensions
   - will add the ability to set associations automatically when I switch to csharp (along with supporting more+animated formats)
