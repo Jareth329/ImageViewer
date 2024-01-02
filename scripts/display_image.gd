@@ -48,6 +48,7 @@ var window_size_percent:float = 0.75
 var row_size_skip:int = 10
 var use_history:bool = false
 var history_max_size:int = 10
+var reset_camera_on_image_change:bool = true
 
 # variables
 var panning:bool = false
@@ -208,9 +209,8 @@ func _files_dropped(paths:PackedStringArray) -> void:
 	create_paths_array(paths[0])
 
 func change_image(path:String) -> void:
-	if use_history and history.has(path):
-		# anything related to accessing Dictionary is Variant only
-		image.texture = history[path]
+	if reset_camera_on_image_change: reset_camera_state()
+	if use_history and history.has(path): image.texture = history[path]
 	else:
 		if not FileAccess.file_exists(path): return
 		var img:Image = Image.new()
