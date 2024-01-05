@@ -186,13 +186,12 @@ func zoom_to_point(step:float, event_position:Vector2) -> void:
 		new_offset *= (zoom_max - camera.zoom.x) / (zoom_max * (pow(1.1 + (camera.zoom.x / zoom_max), 8)))
 	else: new_offset /= camera.zoom.x
 	
-	if allow_rotation:
-		var rot:float = camera.rotation
-		var rsin:float = sin(rot)
-		var rcos:float = cos(rot)
-		var rmultx:float = (rcos * new_offset.x) - (rsin * new_offset.y)
-		var rmulty:float = (rsin * new_offset.x) + (rcos * new_offset.y)
-		new_offset = Vector2(rmultx, rmulty)
+	var rot:float = camera.rotation
+	var rsin:float = sin(rot)
+	var rcos:float = cos(rot)
+	var rmultx:float = (rcos * new_offset.x) - (rsin * new_offset.y)
+	var rmulty:float = (rsin * new_offset.x) + (rcos * new_offset.y)
+	new_offset = Vector2(rmultx, rmulty)
 	
 	new_offset *= 0.25 if step < 0 else -0.25
 	camera.offset += new_offset
@@ -202,33 +201,33 @@ func zoom_to_point(step:float, event_position:Vector2) -> void:
 #region Pan Functions
 func pan(relative_position:Vector2) -> void:
 	var rot:float = camera.rotation
-	var rot_sin:float = sin(rot)
-	var rot_cos:float = cos(rot)
-	var rot_mult_x:float = (rot_cos * relative_position.x) - (rot_sin * relative_position.y)
-	var rot_mult_y:float = (rot_sin * relative_position.x) + (rot_cos * relative_position.y)
+	var rsin:float = sin(rot)
+	var rcos:float = cos(rot)
+	var rmultx:float = (rcos * relative_position.x) - (rsin * relative_position.y)
+	var rmulty:float = (rsin * relative_position.x) + (rcos * relative_position.y)
 	var zoom_mult:float = (zoom_max / camera.zoom.x) * 0.07
-	var rot_offset:Vector2 = Vector2(rot_mult_x, rot_mult_y) * zoom_mult * pan_speed
+	var new_offset:Vector2 = Vector2(rmultx, rmulty) *  zoom_mult * pan_speed
 	
 	# sets the pan speed to 0 at the perimeter
 	if pan_mode == Pan.CONSTRAINED:
-		if rot_offset.x > 0 and camera.offset.x <= -pan_limit_w: rot_offset.x = 0
-		elif rot_offset.x < 0 and camera.offset.x >= pan_limit_w: rot_offset.x = 0
-		if rot_offset.y > 0 and camera.offset.y <= -pan_limit_h: rot_offset.y = 0
-		elif rot_offset.y < 0 and camera.offset.y >= pan_limit_h: rot_offset.y = 0
+		if new_offset.x > 0 and camera.offset.x <= -pan_limit_w: new_offset.x = 0
+		elif new_offset.x < 0 and camera.offset.x >= pan_limit_w: new_offset.x = 0
+		if new_offset.y > 0 and camera.offset.y <= -pan_limit_h: new_offset.y = 0
+		elif new_offset.y < 0 and camera.offset.y >= pan_limit_h: new_offset.y = 0
 	
 	# reduces pan speed with increased distance from center (0 at perimeter)
 	if pan_mode == Pan.DAMPENED:
-		if rot_offset.x > 0 and camera.offset.x <= 0:
-			rot_offset.x *= 1 - (maxf(0, absf(camera.offset.x) / pan_limit_w))
-		elif rot_offset.x < 0 and camera.offset.x >= 0:
-			rot_offset.x *= 1 - (maxf(0, absf(camera.offset.x) / pan_limit_w))
-		if rot_offset.y > 0 and camera.offset.y <= 0:
-			rot_offset.y *= 1 - (maxf(0, absf(camera.offset.y) / pan_limit_h))
-		elif rot_offset.y < 0 and camera.offset.y >= 0:
-			rot_offset.y *= 1 - (maxf(0, absf(camera.offset.y) / pan_limit_h))
+		if new_offset.x > 0 and camera.offset.x <= 0:
+			new_offset.x *= 1 - (maxf(0, absf(camera.offset.x) / pan_limit_w))
+		elif new_offset.x < 0 and camera.offset.x >= 0:
+			new_offset.x *= 1 - (maxf(0, absf(camera.offset.x) / pan_limit_w))
+		if new_offset.y > 0 and camera.offset.y <= 0:
+			new_offset.y *= 1 - (maxf(0, absf(camera.offset.y) / pan_limit_h))
+		elif new_offset.y < 0 and camera.offset.y >= 0:
+			new_offset.y *= 1 - (maxf(0, absf(camera.offset.y) / pan_limit_h))
 	
-	camera.offset -= rot_offset
-	camera.offset = camera.offset.lerp(camera.offset - rot_offset, pan_step)
+	camera.offset -= new_offset
+	camera.offset = camera.offset.lerp(camera.offset - new_offset, pan_step)
 #endregion
 
 #region Rotation Functions
