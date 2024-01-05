@@ -19,7 +19,7 @@ config/icon="res://assets/icon.svg"
 
 [autoload]
 
-Signals="*res://scripts/signals.gd"
+Globals="*res://scripts/globals.gd"
 
 [display]
 

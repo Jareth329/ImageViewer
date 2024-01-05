@@ -1,36 +1,65 @@
 extends Control
 
-var borderless:bool = false
+#region (Effective) Constants
+@onready var display:Display = $margin/display_image as Display
+var supported_formats:PackedStringArray = [ "jpg", "jpeg", "png", "bmp", "dds", "ktx", "exr", "hdr", "tga", "svg", "webp" ]
+#endregion
+
+#region Settings
+var reset_camera_on_image_change:bool = true
+var virtual_row_size:int = 10
+var window_max_size:Vector2i = Vector2i(960, 720)
+var window_max_size_percent:float = 0.75
+
+var use_history:bool = false
+var history_max_size:int = 10
+#endregion
+
+#region Variables
+var image_paths:Array[String] = []
+var image_index:int = 0
+
+var history:Dictionary = {} # String(path) : ImageTexture(image)
+var history_queue:Array[String] = []
+#endregion
 
 func _ready() -> void:
 	# need to make this a setting the user can toggle; alternatively,
 	# can just put a colorrect in the background and allow user to choose color, including transparent
+	# connect signals
 	# get_tree().root.transparent_bg = true
-	pass
+	get_tree().root.files_dropped.connect(_files_dropped)
+	get_tree().root.ready.connect(_load_cmdline_image)
+	Globals.prev_pressed.connect(prev_image)
+	Globals.next_pressed.connect(next_image)
+	
+	# calc max window size
+	var screen_size:Vector2i = DisplayServer.screen_get_size()
+	window_max_size = screen_size * window_max_size_percent
 
+#region User Input
 func _unhandled_input(event:InputEvent) -> void:
 	if event is InputEventKey:
 		var ev:InputEventKey = event as InputEventKey
 		if not ev.pressed: return
-		if ev.keycode == KEY_TAB:
-			Signals.update_visibility_ui.emit()
-		elif ev.keycode == KEY_F9:
-			_update_titlebar_visibility()
-		elif ev.keycode == KEY_F8 or ev.keycode == KEY_ESCAPE:
-			get_tree().quit()
-		elif ev.keycode == KEY_F11:
-			_set_window_mode(Window.MODE_FULLSCREEN)
-		elif ev.keycode == KEY_F10:
-			_set_window_mode(Window.MODE_MAXIMIZED)
-		elif ev.keycode == KEY_B:
-			_toggle_background_transparency()
+		if ev.keycode == KEY_TAB: Globals.update_visibility_ui.emit()
+		elif ev.keycode == KEY_LEFT: prev_image(1)
+		elif ev.keycode == KEY_RIGHT: next_image(1)
+		elif ev.keycode == KEY_UP: prev_image(virtual_row_size)
+		elif ev.keycode == KEY_DOWN: next_image(virtual_row_size)
+		elif ev.keycode == KEY_F9: _update_titlebar_visibility()
+		elif ev.keycode == KEY_F8 or ev.keycode == KEY_ESCAPE: get_tree().quit()
+		elif ev.keycode == KEY_F11: _set_window_mode(Window.MODE_FULLSCREEN)
+		elif ev.keycode == KEY_F10: _set_window_mode(Window.MODE_MAXIMIZED)
+		elif ev.keycode == KEY_B: _toggle_background_transparency()
+#endregion
 
+#region User Interface
 func _toggle_background_transparency() -> void:
 	get_tree().root.transparent_bg = not get_tree().root.transparent_bg
 
 func _update_titlebar_visibility() -> void:
-	get_tree().root.borderless = not borderless
-	borderless = not borderless
+	get_tree().root.borderless = not get_tree().root.borderless
 
 func _set_window_mode(mode:int) -> void:
 	var curr_mode:int = get_tree().root.mode
@@ -51,3 +80,82 @@ func _set_window_mode(mode:int) -> void:
 			get_tree().root.mode = Window.MODE_FULLSCREEN
 		else:
 			get_tree().root.mode = Window.MODE_WINDOWED
+
+func update_ui(image_name:String, image_dimensions:Vector2i) -> void:
+	get_tree().root.title = "ImageViewer - %s" % [image_name]
+	
+	if get_tree().root.mode == Window.MODE_WINDOWED:
+		var max_ratio:float = float(window_max_size.x) / window_max_size.y
+		var img_ratio:float = float(image_dimensions.x) / image_dimensions.y
+		if img_ratio > 1 and img_ratio >= max_ratio:
+			get_tree().root.size = Vector2(window_max_size.x, float(window_max_size.x) / img_ratio)
+		else: get_tree().root.size = Vector2(float(window_max_size.y) * img_ratio, window_max_size.y)
+
+func prev_image(nth_index:int) -> void:
+	if image_paths.is_empty(): return
+	image_index = (image_paths.size() + ((image_index - nth_index) + image_paths.size())) % image_paths.size()
+	change_image(image_paths[image_index])
+	Globals.update_counter.emit(image_index + 1, image_paths.size())
+
+func next_image(nth_index:int) -> void:
+	if image_paths.is_empty(): return
+	image_index = (image_paths.size() + ((image_index + nth_index) - image_paths.size())) % image_paths.size()
+	change_image(image_paths[image_index])
+	Globals.update_counter.emit(image_index + 1, image_paths.size())
+#endregion
+
+#region IO
+func _load_cmdline_image() -> void:
+	var args:PackedStringArray = OS.get_cmdline_args()
+	if args.size() > 0:
+		var path:String = args[0]
+		change_image(path)
+		create_paths_array(path)
+
+func _files_dropped(paths:PackedStringArray) -> void:
+	# ignore extra paths for now
+	var path:String = paths[0]
+	change_image(path)
+	create_paths_array(path)
+
+func change_image(path:String) -> void:
+	if reset_camera_on_image_change: display.reset_camera_state()
+	if use_history and history.has(path) and history[path] is ImageTexture:
+		var _texture:ImageTexture = history[path] as ImageTexture
+		update_ui(path.get_file(), _texture.get_image().get_size())
+		display.image.texture = _texture
+		return 
+	
+	if not FileAccess.file_exists(path): return
+	var image:Image = Image.new()
+	var error:int = image.load(path)
+	if error != OK: return
+	
+	var texture:ImageTexture = ImageTexture.create_from_image(image)
+	if use_history: add_to_history(path, texture)
+	update_ui(path.get_file(), image.get_size())
+	display.image.texture = texture
+
+func create_paths_array(path:String) -> void:
+	image_paths.clear()
+	var folder:String = path.get_base_dir()
+	if not DirAccess.dir_exists_absolute(folder): return
+	var files:Array[String] = Array(Array(DirAccess.get_files_at(folder)), TYPE_STRING, "", null) as Array[String]
+	files.sort_custom(Globals.SortNatural.sort)
+	var index:int = 0
+	for file:String in files:
+		if supported_formats.has(file.get_extension().to_lower()):
+			image_paths.append(folder.path_join(file))
+			if path.get_file() == file: 
+				image_index = index
+			else: index += 1
+	Globals.update_counter.emit(image_index + 1, image_paths.size())
+#endregion
+
+#region History
+func add_to_history(path:String, texture:ImageTexture) -> void:
+	if history_queue.size() >= history_max_size:
+		history.erase(history_queue.pop_front())
+	history[path] = texture
+	history_queue.push_back(path)
+#endregion

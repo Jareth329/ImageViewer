@@ -3,8 +3,8 @@ extends PanelContainer
 @onready var label:Label = $label as Label
 
 func _ready() -> void:
-	Signals.update_counter.connect(_update_counter)
-	Signals.update_visibility_ui.connect(_update_visibility)
+	Globals.update_counter.connect(_update_counter)
+	Globals.update_visibility_ui.connect(_update_visibility)
 
 func _update_counter(value:int, max_value:int) -> void:
 	label.text = " %d / %d " % [value, max_value]

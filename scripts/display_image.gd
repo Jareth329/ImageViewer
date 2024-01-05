@@ -1,4 +1,4 @@
-extends TextureRect
+class_name Display extends TextureRect
 
 #region Notes
 # viewport size dictates the resolution available, but if the user zooms in then a smaller portion of 
@@ -51,16 +51,6 @@ enum Pan { FREE, DAMPENED, CONSTRAINED }
 @export var rotation_speed:float = 0.7
 #endregion
 
-#region UI Settings
-var window_max_x:float = 960
-var window_max_y:float = 720
-var window_size_percent:float = 0.75
-var row_size_skip:int = 10
-var use_history:bool = false
-var history_max_size:int = 10
-var reset_camera_on_image_change:bool = true
-#endregion
-
 #region (Effective) Constants
 @onready var viewport:SubViewport = $viewport as SubViewport
 @onready var image:TextureRect = $viewport/viewport_image as TextureRect
@@ -69,29 +59,19 @@ var reset_camera_on_image_change:bool = true
 var default_zoom:Vector2
 var default_offset:Vector2
 var default_rotation:float
-
-var supported_formats:PackedStringArray = [ "jpg", "jpeg", "png", "bmp", "dds", "ktx", "exr", "hdr", "tga", "svg", "webp" ]
 #endregion
 
 #region Variables
 var panning:bool = false
 var rotating:bool = false
 var fast_zooming:bool = false
-
-var file_paths:Array[String] = []
-var curr_index:int = 0
-
-var history:Dictionary = {} # String : ImageTexture
-var history_queue:Array[String] = []
 #endregion
 
 #region Functions
 func _ready() -> void:
 	# connect signals
 	self.gui_input.connect(_on_gui_input)
-	get_tree().root.files_dropped.connect(_files_dropped)
-	get_tree().root.ready.connect(_load_cmdline_image)
-	
+
 	# set default camera state
 	default_rotation = camera.rotation
 	default_offset = camera.offset
@@ -102,11 +82,6 @@ func _ready() -> void:
 	camera.position = viewport.size / 2
 	pan_limit_w = camera.position.x
 	pan_limit_h = camera.position.y
-	
-	# set variables related to window size
-	var screen_size:Vector2 = DisplayServer.screen_get_size()
-	window_max_x = screen_size.x * window_size_percent
-	window_max_y = screen_size.y * window_size_percent
 
 func reset_camera_state() -> void:
 	camera.zoom = default_zoom
@@ -118,7 +93,7 @@ func reset_camera_state() -> void:
 func toggle_filter() -> void:
 	if image.texture_filter == TEXTURE_FILTER_NEAREST:
 		image.texture_filter = TEXTURE_FILTER_LINEAR
-	else: image.texture_filter = TEXTURE_FILTER_NEAREST 
+	else: image.texture_filter = TEXTURE_FILTER_NEAREST
 #endregion
 
 #region UI Functions
@@ -127,10 +102,6 @@ func _unhandled_input(event:InputEvent) -> void:
 		var ev:InputEventKey = event as InputEventKey
 		if not ev.pressed: return
 		if ev.keycode == KEY_F5 or ev.keycode == KEY_R: reset_camera_state()
-		elif ev.keycode == KEY_LEFT: prev_image(1)
-		elif ev.keycode == KEY_RIGHT: next_image(1)
-		elif ev.keycode == KEY_UP: prev_image(row_size_skip)
-		elif ev.keycode == KEY_DOWN: next_image(row_size_skip)
 		elif ev.keycode == KEY_H: image.flip_h = not image.flip_h
 		elif ev.keycode == KEY_V: image.flip_v = not image.flip_v
 		elif ev.keycode == KEY_F: toggle_filter()
@@ -147,12 +118,12 @@ func _on_gui_input(event:InputEvent) -> void:
 			if allow_zoom and use_scrollwheel: # zoom in
 				if use_point_zoom: zoom_to_point(zoom_step, ev.position)
 				else: zoom_to_center(zoom_step)
-			else: prev_image(1)
+			else: Globals.prev_pressed.emit(1)
 		elif ev.button_index == MOUSE_BUTTON_WHEEL_DOWN:
 			if allow_zoom and use_scrollwheel: # zoom out
 				if use_point_zoom: zoom_to_point(-zoom_step, ev.position)
 				else: zoom_to_center(-zoom_step)
-			else: next_image(1)
+			else: Globals.next_pressed.emit(1)
 		elif ev.button_index == MOUSE_BUTTON_LEFT: panning = true
 		elif ev.button_index == MOUSE_BUTTON_MIDDLE: fast_zooming = true
 		elif ev.button_index == MOUSE_BUTTON_RIGHT: rotating = true
@@ -256,82 +227,4 @@ func _get_clockwise(angle:float) -> bool:
 	if prev_angle > PI/2 and angle < -PI/2: return true
 	if angle < prev_angle: return false
 	return true
-
-#endregion
-
-#region IO Functions
-func _load_cmdline_image() -> void:
-	var args:PackedStringArray = OS.get_cmdline_args()
-	if args.size() > 0:
-		change_image(args[0])
-		create_paths_array(args[0])
-
-func _files_dropped(paths:PackedStringArray) -> void:
-	# ignore extra paths for now
-	change_image(paths[0])
-	create_paths_array(paths[0])
-
-func change_image(path:String) -> void:
-	if reset_camera_on_image_change: reset_camera_state()
-	if use_history and history.has(path): image.texture = history[path]
-	else:
-		if not FileAccess.file_exists(path): return
-		var img:Image = Image.new()
-		# this gives an error, but the error is nonsensical for my use case (non res:// paths)
-		var err:int = img.load(path)
-		if err != OK: return
-		var tex:ImageTexture = ImageTexture.create_from_image(img)
-		image.texture = tex
-		if use_history: 
-			add_to_history(path, tex)
-	get_tree().root.title = "ImageViewer  -  %s" % [path.get_file()]
-	
-	if get_tree().root.mode == Window.MODE_WINDOWED:
-		var res:Vector2 = image.texture.get_image().get_size()
-		var max_ratio:float = window_max_x / window_max_y
-		var img_ratio:float = res.x / res.y
-		# could use 1 / img_ratio for if and img_ratio for else; but it makes code less clear; especially for if statement
-		if res.x > res.y and img_ratio >= max_ratio: get_tree().root.size = Vector2(window_max_x, window_max_x * res.y / res.x)
-		else: get_tree().root.size = Vector2(window_max_y * res.x / res.y, window_max_y)
-
-func create_paths_array(file_path:String) -> void:
-	file_paths.clear()
-	var folder_path:String = file_path.get_base_dir()
-	if not DirAccess.dir_exists_absolute(folder_path): return
-	# this technically works, but it is really ugly
-	var files:Array[String] = Array(Array(DirAccess.get_files_at(folder_path)), TYPE_STRING, "", null) as Array[String]
-	files.sort_custom(Signals.SortNatural.sort)
-	var index:int = 0
-	for file:String in files:
-		if supported_formats.has(file.get_extension().to_lower()):
-			file_paths.append(folder_path.path_join(file))
-			if file_path.get_file() == file: curr_index = index
-			else: index += 1
-	Signals.update_counter.emit(curr_index + 1, file_paths.size())
-
-func prev_image(nth_image:int) -> void:
-	# skip to prev nth image
-	if file_paths.is_empty(): return
-	curr_index = (file_paths.size() + ((curr_index - nth_image) + file_paths.size())) % file_paths.size()
-	change_image(file_paths[curr_index])
-	Signals.update_counter.emit(curr_index + 1, file_paths.size())
-
-func next_image(nth_image:int) -> void:
-	# skip to next nth image
-	if file_paths.is_empty(): return
-	curr_index = (file_paths.size() + ((curr_index + nth_image) - file_paths.size())) % file_paths.size()
-	change_image(file_paths[curr_index])
-	Signals.update_counter.emit(curr_index + 1, file_paths.size())
-
-func add_to_history(path:String, tex:ImageTexture) -> void:
-	if history_queue.size() >= history_max_size:
-		# made type safe by not using the output of pop_front()
-		# should not cause issues as long as I enforce that:	history_max_size = maxi(1, history_max_size)
-		# overall might be less performant than original though
-		var oldest_path:String = history_queue[0]
-		history_queue.pop_front()
-		history.erase(oldest_path)
-	# anything related to accessing Dictionary is Variant only
-	history[path] = tex
-	history_queue.push_back(path)
 #endregion

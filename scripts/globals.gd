@@ -1,5 +1,7 @@
 extends Node
 
+signal next_pressed(value:int)
+signal prev_pressed(value:int)
 signal update_counter(value:int, max_value:int)
 signal update_visibility_ui
 
