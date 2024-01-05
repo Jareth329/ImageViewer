@@ -7,6 +7,7 @@ signal update_visibility_ui
 
 class SortNatural:
 	static var regex_num:RegEx = RegEx.create_from_string("([0-9]+)")
+	#static var regex_num:RegEx = RegEx.create_from_string("([0-9]+)|([^0-9]+)")
 	
 	static func compare(a:String, b:String) -> bool:
 		if not a.is_valid_int() or not b.is_valid_int():
@@ -35,6 +36,12 @@ class SortNatural:
 		for i:int in mini(a2.size(), b2.size()):
 			if a2[i] != b2[i]:
 				return compare(a2[i], b2[i])
+		
+		#for i:int in mini(a1.size(), b1.size()):
+			#var a2:String = a1[i].get_string()
+			#var b2:String = b1[i].get_string()
+			#if a2 != b2:
+				#return compare(a2, b2)
 		
 		if len(b1) > len(a1): 
 			return true
