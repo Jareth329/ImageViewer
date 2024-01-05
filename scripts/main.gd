@@ -11,7 +11,8 @@ var virtual_row_size:int = 10
 var window_max_size:Vector2i = Vector2i(960, 720)
 var window_max_size_percent:float = 0.75
 
-var use_history:bool = false
+var use_threading:bool = true
+var use_history:bool = true
 var history_max_size:int = 10
 #endregion
 
@@ -107,16 +108,16 @@ func next_image(nth_index:int) -> void:
 #region IO
 func _load_cmdline_image() -> void:
 	var args:PackedStringArray = OS.get_cmdline_args()
-	if args.size() > 0:
+	if args.size() > 0 and not OS.is_debug_build():
 		var path:String = args[0]
-		change_image(path)
 		create_paths_array(path)
+		change_image(path)
 
 func _files_dropped(paths:PackedStringArray) -> void:
 	# ignore extra paths for now
 	var path:String = paths[0]
-	change_image(path)
 	create_paths_array(path)
+	change_image(path)
 
 func change_image(path:String) -> void:
 	if reset_camera_on_image_change: display.reset_camera_state()
@@ -125,6 +126,10 @@ func change_image(path:String) -> void:
 		update_ui(path.get_file(), _texture.get_image().get_size())
 		display.image.texture = _texture
 		return 
+	
+	if use_threading: 
+		load_image(image_index, path)
+		return
 	
 	if not FileAccess.file_exists(path): return
 	var image:Image = Image.new()
@@ -158,4 +163,31 @@ func add_to_history(path:String, texture:ImageTexture) -> void:
 		history.erase(history_queue.pop_front())
 	history[path] = texture
 	history_queue.push_back(path)
+#endregion
+
+#region Threading
+func load_image(index:int, path:String) -> void:
+	var thread:Thread = Thread.new()
+	thread.start(_load_image.bindv([index, path, thread]))
+
+func _load_image(index:int, path:String, thread:Thread) -> void:
+	if not FileAccess.file_exists(path): return
+	if index != image_index: return
+	
+	var image:Image = Image.new()
+	if index != image_index: return
+	var error:int = image.load(path)
+	if error != OK: return
+	if index != image_index: return
+	
+	var texture:ImageTexture = ImageTexture.create_from_image(image)
+	if index != image_index: return
+	_finished.call_deferred(index, path, texture)
+	thread.wait_to_finish.call_deferred()
+
+func _finished(index:int, path:String, texture:ImageTexture) -> void:
+	if index != image_index: return
+	if use_history: add_to_history(path, texture)
+	update_ui(path.get_file(), texture.get_image().get_size())
+	display.image.texture = texture
 #endregion
