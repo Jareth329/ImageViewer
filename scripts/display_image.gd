@@ -47,7 +47,6 @@ enum Pan { FREE, DAMPENED, CONSTRAINED }
 #region Rotate Settings
 @export_category("Rotation")
 @export var allow_rotation:bool = true
-@export var use_circular_rotation:bool = false
 @export var rotation_step:float = 0.4
 @export var rotation_speed:float = 0.7
 #endregion
@@ -234,14 +233,31 @@ func pan(relative_position:Vector2) -> void:
 
 #region Rotation Functions
 func rotate(event_position:Vector2, relative_position:Vector2) -> void:
-	if use_circular_rotation:
-		var ratio:Vector2 = image.size / self.size
-		var vector:Vector2 = (ratio * event_position) - camera.position
-		var angle:float = atan2(vector.y, vector.x)
-		camera.rotation = -angle
-	else:
-		var target:float = camera.rotation_degrees + (relative_position.x * rotation_speed)
-		camera.rotation_degrees = lerpf(camera.rotation_degrees, target, rotation_step)
+	var ratio:Vector2 = image.size / self.size
+	var vector:Vector2 = (ratio * event_position) - camera.position
+	var angle:float = atan2(vector.y, vector.x)
+	var clockwise:bool = get_clockwise(angle)
+	var movement:float = absf(relative_position.x) + absf(relative_position.y)
+	
+	var target:float = camera.rotation_degrees
+	if clockwise: target -= movement * rotation_speed
+	else: target += movement * rotation_speed
+	
+	camera.rotation_degrees = lerpf(camera.rotation_degrees, target, rotation_step)
+
+var prev_angle:float = 0
+func get_clockwise(angle:float) -> bool:
+	var result:bool = _get_clockwise(angle)
+	prev_angle = angle
+	return result
+
+func _get_clockwise(angle:float) -> bool:
+	# these first two statements handle the -PI/PI flip on the negative x axis
+	if prev_angle < -PI/2 and angle > PI/2: return false
+	if prev_angle > PI/2 and angle < -PI/2: return true
+	if angle < prev_angle: return false
+	return true
+
 #endregion
 
 #region IO Functions
