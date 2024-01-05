@@ -49,6 +49,7 @@ var row_size_skip:int = 10
 var use_history:bool = false
 var history_max_size:int = 10
 var reset_camera_on_image_change:bool = true
+var use_circular_rotation:bool = true
 
 # variables
 var panning:bool = false
@@ -126,7 +127,7 @@ func _on_gui_input(event:InputEvent) -> void:
 	elif event is InputEventMouseMotion:
 		var ev:InputEventMouseMotion = event as InputEventMouseMotion
 		if panning: pan(ev.relative)
-		elif rotating: rotate(ev.relative)
+		elif rotating: rotate(event.position, event.relative)
 		elif zooming: fast_zoom_to_center(ev.relative)
 
 func zoom_to_center(step:float) -> void:
@@ -198,9 +199,15 @@ func pan(relative_position:Vector2) -> void:
 	camera.offset -= rot_offset
 	camera.offset = camera.offset.lerp(camera.offset - rot_offset, pan_step)
 
-func rotate(relative_position:Vector2) -> void:
-	var rotation_target:float = camera.rotation_degrees + (relative_position.x * rotation_speed)
-	camera.rotation_degrees = lerpf(camera.rotation_degrees, rotation_target, rotation_step)
+func rotate(event_position:Vector2, relative_position:Vector2) -> void:
+	if use_circular_rotation:
+		var ratio:Vector2 = image.size / self.size
+		var vector:Vector2 = (ratio * event_position) - camera.position
+		var angle:float = atan2(vector.y, vector.x)
+		camera.rotation = -angle
+	else:
+		var target:float = camera.rotation_degrees + (relative_position.x * rotation_speed)
+		camera.rotation_degrees = lerpf(camera.rotation_degrees, target, rotation_step)
 
 # functions
 func _files_dropped(paths:PackedStringArray) -> void:
