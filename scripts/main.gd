@@ -84,13 +84,17 @@ func _set_window_mode(mode:int) -> void:
 
 func update_ui(image_name:String, image_dimensions:Vector2i) -> void:
 	get_tree().root.title = "ImageViewer - %s" % [image_name]
+	if reset_camera_on_image_change: 
+		display.reset_camera_state()
 	
 	if get_tree().root.mode == Window.MODE_WINDOWED:
 		var max_ratio:float = float(window_max_size.x) / window_max_size.y
 		var img_ratio:float = float(image_dimensions.x) / image_dimensions.y
 		if img_ratio > 1 and img_ratio >= max_ratio:
 			get_tree().root.size = Vector2(window_max_size.x, float(window_max_size.x) / img_ratio)
-		else: get_tree().root.size = Vector2(float(window_max_size.y) * img_ratio, window_max_size.y)
+		else: 
+			get_tree().root.size = Vector2(float(window_max_size.y) * img_ratio, window_max_size.y)
+		display.resize()
 
 func prev_image(nth_index:int) -> void:
 	if image_paths.is_empty(): return
@@ -120,7 +124,6 @@ func _files_dropped(paths:PackedStringArray) -> void:
 	change_image(path)
 
 func change_image(path:String) -> void:
-	if reset_camera_on_image_change: display.reset_camera_state()
 	if use_history and history.has(path) and history[path] is ImageTexture:
 		var _texture:ImageTexture = history[path] as ImageTexture
 		update_ui(path.get_file(), _texture.get_image().get_size())
