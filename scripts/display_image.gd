@@ -101,22 +101,15 @@ func resize() -> void:
 	var img:Vector2 = image.texture.get_image().get_size()
 	var img_aspect:float = img.x / img.y
 	var self_aspect:float = self.size.x / self.size.y
+	# should be global scope variable that controls initial viewport size
 	var default:Vector2 = Vector2(2560, 1440)
 	var def_aspect:float = default.x / default.y
-	var view_aspect:float = float(viewport.size.x) / viewport.size.y
 	
-	var _ratio:float = img_aspect / self_aspect
-	var _ratio2:float = self_aspect / def_aspect * view_aspect
-	var _ratio3:float = def_aspect / img_aspect
+	var _ratio:float = def_aspect / self_aspect
 	var _size:Vector2 = default
 	
-	if img_aspect > self_aspect:
-		if _ratio2 <= self_aspect and img_aspect < 1:
-			_size.y *= _ratio * _ratio3
-		else: 
-			_size.y *= _ratio
-	elif img_aspect < self_aspect:
-		_size.x /= _ratio
+	if img_aspect > self_aspect: _size.y *= _ratio
+	elif img_aspect < self_aspect: _size.x /= _ratio
 	
 	viewport.size = _size
 	image.size = viewport.size
