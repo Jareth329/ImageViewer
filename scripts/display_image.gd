@@ -152,7 +152,7 @@ func _on_gui_input(event:InputEvent) -> void:
 	elif event is InputEventMouseMotion:
 		var ev:InputEventMouseMotion = event as InputEventMouseMotion
 		if allow_pan and panning: pan(ev.relative)
-		elif allow_rotation and rotating: rotate(event.position, event.relative)
+		elif allow_rotation and rotating: rotate(ev.position, ev.relative)
 		elif allow_zoom and fast_zooming: fast_zoom_to_center(ev.relative)
 #endregion
 
