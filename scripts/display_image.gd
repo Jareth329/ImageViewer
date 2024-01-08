@@ -22,6 +22,12 @@ class_name Display extends TextureRect
 # popup for error images and remove their path from the array
 #endregion
 
+#region Viewport Settings
+@export_category("Viewport")
+@export var viewport_size:Vector2 = Vector2(2560, 1440)
+var viewport_aspect:float = viewport_size.x / viewport_size.y # needs to be updated when viewport_size changes
+#endregion
+
 #region Zoom Settings
 @export_category("Zoom")
 @export var allow_zoom:bool = true
@@ -34,14 +40,14 @@ class_name Display extends TextureRect
 #endregion
 
 #region Pan Settings
-enum Pan { FREE, DAMPENED, CONSTRAINED }
+enum Pan { FREE, DAMPED, CONSTRAINED }
 @export_category("Pan")
 @export var allow_pan:bool = true
-@export var pan_mode:Pan = Pan.DAMPENED
-@export var pan_limit_w:float = 1280 # need to actually allow setting these manually; probably as a multiplier of viewport size
-@export var pan_limit_h:float = 720
+@export var pan_mode:Pan = Pan.DAMPED
+@export var pan_limit:float = 0.5 # what percentage of image can leave window at default zoom
 @export var pan_step:float = 0.4
 @export var pan_speed:float = 0.3
+@export var pan_damping_start:float = 0.5 # distance from center as a percentage (0=always damp, 1=same as constrained)
 #endregion
 
 #region Rotate Settings
@@ -79,10 +85,9 @@ func _ready() -> void:
 	default_zoom = camera.zoom
 	
 	# set variables related to viewport size
-	image.size = viewport.size
-	camera.position = viewport.size / 2
-	pan_limit_w = camera.position.x
-	pan_limit_h = camera.position.y
+	viewport.size = viewport_size
+	image.size = viewport_size
+	camera.position = viewport_size / 2
 
 func reset_camera_state() -> void:
 	camera.zoom = default_zoom
@@ -101,21 +106,16 @@ func resize() -> void:
 	var img:Vector2 = image.texture.get_image().get_size()
 	var img_aspect:float = img.x / img.y
 	var self_aspect:float = self.size.x / self.size.y
-	# should be global scope variable that controls initial viewport size
-	var default:Vector2 = Vector2(2560, 1440)
-	var def_aspect:float = default.x / default.y
 	
-	var _ratio:float = def_aspect / self_aspect
-	var _size:Vector2 = default
+	var _ratio:float = viewport_aspect / self_aspect
+	var _size:Vector2 = viewport_size
 	
 	if img_aspect > self_aspect: _size.y *= _ratio
 	elif img_aspect < self_aspect: _size.x /= _ratio
 	
 	viewport.size = _size
-	image.size = viewport.size
-	camera.position = viewport.size / 2
-	pan_limit_w = camera.position.x
-	pan_limit_h = camera.position.y
+	image.size = _size
+	camera.position = _size / 2
 #endregion
 
 #region User Input Functions
@@ -200,24 +200,26 @@ func pan(relative_position:Vector2) -> void:
 	var rmulty:float = (rsin * relative_position.x) + (rcos * relative_position.y)
 	var zoom_mult:float = (zoom_max / camera.zoom.x) * 0.07
 	var new_offset:Vector2 = Vector2(rmultx, rmulty) *  zoom_mult * pan_speed
+	var limit:Vector2 = viewport.size * pan_limit
 	
 	# sets the pan speed to 0 at the perimeter
 	if pan_mode == Pan.CONSTRAINED:
-		if new_offset.x > 0 and camera.offset.x <= -pan_limit_w: new_offset.x = 0
-		elif new_offset.x < 0 and camera.offset.x >= pan_limit_w: new_offset.x = 0
-		if new_offset.y > 0 and camera.offset.y <= -pan_limit_h: new_offset.y = 0
-		elif new_offset.y < 0 and camera.offset.y >= pan_limit_h: new_offset.y = 0
+		if new_offset.x > 0 and camera.offset.x <= -limit.x: new_offset.x = 0
+		elif new_offset.x < 0 and camera.offset.x >= limit.x: new_offset.x = 0
+		if new_offset.y > 0 and camera.offset.y <= -limit.y: new_offset.y = 0
+		elif new_offset.y < 0 and camera.offset.y >= limit.y: new_offset.y = 0
 	
 	# reduces pan speed with increased distance from center (0 at perimeter)
-	if pan_mode == Pan.DAMPENED:
-		if new_offset.x > 0 and camera.offset.x <= 0:
-			new_offset.x *= 1 - (maxf(0, absf(camera.offset.x) / pan_limit_w))
-		elif new_offset.x < 0 and camera.offset.x >= 0:
-			new_offset.x *= 1 - (maxf(0, absf(camera.offset.x) / pan_limit_w))
-		if new_offset.y > 0 and camera.offset.y <= 0:
-			new_offset.y *= 1 - (maxf(0, absf(camera.offset.y) / pan_limit_h))
-		elif new_offset.y < 0 and camera.offset.y >= 0:
-			new_offset.y *= 1 - (maxf(0, absf(camera.offset.y) / pan_limit_h))
+	if pan_mode == Pan.DAMPED:
+		var damped_offset:Vector2 = camera.offset * pan_damping_start
+		if new_offset.x > 0 and camera.offset.x <= damped_offset.x:
+			new_offset.x *= 1 - (maxf(0, absf(camera.offset.x) / limit.x))
+		elif new_offset.x < 0 and camera.offset.x >= damped_offset.x:
+			new_offset.x *= 1 - (maxf(0, absf(camera.offset.x) / limit.x))
+		if new_offset.y > 0 and camera.offset.y <= damped_offset.y:
+			new_offset.y *= 1 - (maxf(0, absf(camera.offset.y) / limit.y))
+		elif new_offset.y < 0 and camera.offset.y >= damped_offset.y:
+			new_offset.y *= 1 - (maxf(0, absf(camera.offset.y) / limit.y))
 	
 	camera.offset -= new_offset
 	camera.offset = camera.offset.lerp(camera.offset - new_offset, pan_step)
