@@ -251,6 +251,5 @@ func _get_clockwise(angle:float) -> bool:
 	# these first two statements handle the -PI/PI flip on the negative x axis
 	if prev_angle < -PI/2 and angle > PI/2: return false
 	if prev_angle > PI/2 and angle < -PI/2: return true
-	if angle < prev_angle: return false
-	return true
+	return angle > prev_angle
 #endregion
