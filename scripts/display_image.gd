@@ -177,18 +177,42 @@ func zoom_to_point(step:float, event_position:Vector2) -> void:
 	new_zoom = clampf(new_zoom, zoom_min, zoom_max)
 	var new_offset:Vector2 = ((self.position + self.size) / 2) - event_position
 	
+	# account for zoom
 	if camera.zoom.x > 1.0: 
 		new_offset *= (zoom_max - camera.zoom.x) / (zoom_max * (pow(1.1 + (camera.zoom.x / zoom_max), 8)))
 	else: new_offset /= camera.zoom.x
 	
+	# account for rotation
 	var rot:float = camera.rotation
 	var rsin:float = sin(rot)
 	var rcos:float = cos(rot)
 	var rmultx:float = (rcos * new_offset.x) - (rsin * new_offset.y)
 	var rmulty:float = (rsin * new_offset.x) + (rcos * new_offset.y)
-	new_offset = Vector2(rmultx, rmulty)
 	
+	# fix direction and scale
+	new_offset = Vector2(rmultx, rmulty)
 	new_offset *= 0.25 if step < 0 else -0.25
+	
+	# account for pan limit
+	var limit:Vector2 = viewport.size * pan_limit
+	if pan_mode == Pan.CONSTRAINED:
+		if new_offset.x < 0 and camera.offset.x <= -limit.x: new_offset.x = 0
+		elif new_offset.x > 0 and camera.offset.x >= limit.x: new_offset.x = 0
+		if new_offset.y < 0 and camera.offset.y <= -limit.y: new_offset.y = 0
+		elif new_offset.y > 0 and camera.offset.y >= limit.y: new_offset.y = 0
+	
+	elif pan_mode == Pan.DAMPED:
+		var damped_offset:Vector2 = camera.offset * pan_damping_start
+		if new_offset.x < 0 and camera.offset.x <= damped_offset.x:
+			new_offset.x *= 1 - (maxf(0, absf(camera.offset.x) / limit.x))
+		elif new_offset.x > 0 and camera.offset.x >= damped_offset.x:
+			new_offset.x *= 1 - (maxf(0, absf(camera.offset.x) / limit.x))
+		if new_offset.y < 0 and camera.offset.y <= damped_offset.y:
+			new_offset.y *= 1 - (maxf(0, absf(camera.offset.y) / limit.y))
+		elif new_offset.y > 0 and camera.offset.y >= damped_offset.y:
+			new_offset.y *= 1 - (maxf(0, absf(camera.offset.y) / limit.y))
+	
+	# apply offset and zoom
 	camera.offset += new_offset
 	camera.zoom = Vector2(new_zoom, new_zoom)
 #endregion
@@ -212,7 +236,7 @@ func pan(relative_position:Vector2) -> void:
 		elif new_offset.y < 0 and camera.offset.y >= limit.y: new_offset.y = 0
 	
 	# reduces pan speed with increased distance from center (0 at perimeter)
-	if pan_mode == Pan.DAMPED:
+	elif pan_mode == Pan.DAMPED:
 		var damped_offset:Vector2 = camera.offset * pan_damping_start
 		if new_offset.x > 0 and camera.offset.x <= damped_offset.x:
 			new_offset.x *= 1 - (maxf(0, absf(camera.offset.x) / limit.x))
