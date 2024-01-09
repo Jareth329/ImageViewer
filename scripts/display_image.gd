@@ -92,7 +92,7 @@ func _ready() -> void:
 func reset_camera_state() -> void:
 	camera.zoom = default_zoom
 	camera.offset = default_offset
-	camera.rotation = 0
+	camera.rotation = default_rotation
 	image.flip_h = false
 	image.flip_v = false
 
