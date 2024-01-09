@@ -138,7 +138,7 @@ func change_image(path:String) -> void:
 		var _tmp:Vector2 = _texture.get_image().get_size()
 		image_aspect = _tmp.x / _tmp.y
 		update_ui(path.get_file())
-		display.image.texture = _texture
+		display.change_image(_texture, image_aspect)
 		return 
 	
 	if use_threading: 
@@ -155,7 +155,7 @@ func change_image(path:String) -> void:
 	var tmp:Vector2 = image.get_size()
 	image_aspect = tmp.x / tmp.y
 	update_ui(path.get_file())
-	display.image.texture = texture
+	display.change_image(texture, image_aspect)
 
 func create_paths_array(path:String) -> void:
 	image_paths.clear()
@@ -208,5 +208,5 @@ func _finished(index:int, path:String, texture:ImageTexture) -> void:
 	var tmp:Vector2 = texture.get_image().get_size()
 	image_aspect = tmp.x / tmp.y
 	update_ui(path.get_file())
-	display.image.texture = texture
+	display.change_image(texture, image_aspect)
 #endregion

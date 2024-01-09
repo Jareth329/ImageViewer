@@ -25,7 +25,6 @@ class_name Display extends TextureRect
 #region Viewport Settings
 @export_category("Viewport")
 @export var viewport_size:Vector2 = Vector2(2560, 1440)
-var viewport_aspect:float = viewport_size.x / viewport_size.y # needs to be updated when viewport_size changes
 #endregion
 
 #region Zoom Settings
@@ -71,6 +70,8 @@ var default_rotation:float
 var panning:bool = false
 var rotating:bool = false
 var fast_zooming:bool = false
+var viewport_aspect:float = viewport_size.x / viewport_size.y # needs to be updated when viewport_size changes
+var image_aspect:float = 1.0
 #endregion
 
 #region Functions
@@ -103,19 +104,20 @@ func toggle_filter() -> void:
 
 func resize() -> void:
 	if image.texture == null: return
-	var img:Vector2 = image.texture.get_image().get_size()
-	var img_aspect:float = img.x / img.y
 	var self_aspect:float = self.size.x / self.size.y
-	
 	var _ratio:float = viewport_aspect / self_aspect
 	var _size:Vector2 = viewport_size
 	
-	if img_aspect > self_aspect: _size.y *= _ratio
-	elif img_aspect < self_aspect: _size.x /= _ratio
+	if image_aspect > self_aspect: _size.y *= _ratio
+	elif image_aspect < self_aspect: _size.x /= _ratio
 	
 	viewport.size = _size
 	image.size = _size
 	camera.position = _size / 2
+
+func change_image(_texture:ImageTexture, _aspect:float) -> void:
+	image.texture = _texture
+	image_aspect = _aspect
 #endregion
 
 #region User Input Functions
