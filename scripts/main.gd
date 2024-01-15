@@ -7,29 +7,24 @@ var supported_formats:PackedStringArray = [ "jpg", "jpeg", "png", "bmp", "dds", 
 
 #region Settings
 var reset_camera_on_image_change:bool = true
-var virtual_row_size:int = 10
-var window_max_size:Vector2 = Vector2(960, 720)
-var window_max_size_percent:float = 0.75
-
 var use_threading:bool = true
 var use_history:bool = true
 var history_max_size:int = 10
+var virtual_row_size:int = 100
+var window_max_size_percent:float = 0.75
+var window_max_size:Vector2 = Vector2(960, 720)
 #endregion
 
 #region Variables
-var image_paths:Array[String] = []
 var image_index:int = 0
 var image_aspect:float = 1.0
-
-var history:Dictionary = {} # String(path) : ImageTexture(image)
+var image_paths:Array[String] = []
 var history_queue:Array[String] = []
+var history:Dictionary = {} # String(path) : ImageTexture(image)
 #endregion
 
 func _ready() -> void:
-	# need to make this a setting the user can toggle; alternatively,
-	# can just put a colorrect in the background and allow user to choose color, including transparent
 	# connect signals
-	# get_tree().root.transparent_bg = true
 	get_tree().root.files_dropped.connect(_files_dropped)
 	get_tree().root.ready.connect(_load_cmdline_image)
 	Globals.prev_pressed.connect(prev_image)
@@ -107,15 +102,17 @@ func resize_window() -> void:
 
 func prev_image(nth_index:int) -> void:
 	if image_paths.is_empty(): return
-	image_index = (image_paths.size() + ((image_index - nth_index) + image_paths.size())) % image_paths.size()
+	var num_images:int = image_paths.size()
+	image_index = ((2 * num_images) + (image_index - nth_index)) % num_images
 	change_image(image_paths[image_index])
-	Globals.update_counter.emit(image_index + 1, image_paths.size())
+	Globals.update_counter.emit(image_index + 1, num_images)
 
 func next_image(nth_index:int) -> void:
 	if image_paths.is_empty(): return
-	image_index = (image_paths.size() + ((image_index + nth_index) - image_paths.size())) % image_paths.size()
+	var num_images:int = image_paths.size()
+	image_index = (image_index + nth_index) % num_images
 	change_image(image_paths[image_index])
-	Globals.update_counter.emit(image_index + 1, image_paths.size())
+	Globals.update_counter.emit(image_index + 1, num_images)
 #endregion
 
 #region IO
