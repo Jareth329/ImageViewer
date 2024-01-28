@@ -10,7 +10,7 @@ var reset_camera_on_image_change:bool = true
 var use_threading:bool = true
 var use_history:bool = true
 var history_max_size:int = 10
-var virtual_row_size:int = 100
+var virtual_row_size:int = 10
 var window_max_size_percent:float = 0.75
 var window_max_size:Vector2 = Vector2(960, 720)
 #endregion
@@ -81,7 +81,7 @@ func _set_window_mode(mode:int) -> void:
 			get_tree().root.mode = Window.MODE_WINDOWED
 
 func update_ui(image_name:String) -> void:
-	get_tree().root.title = "ImageViewer - %s" % [image_name]
+	get_tree().root.title = "ImageViewer - %s" % image_name
 	
 	if reset_camera_on_image_change: 
 		display.reset_camera_state()
@@ -103,7 +103,7 @@ func resize_window() -> void:
 func prev_image(nth_index:int) -> void:
 	if image_paths.is_empty(): return
 	var num_images:int = image_paths.size()
-	image_index = ((2 * num_images) + (image_index - nth_index)) % num_images
+	image_index = (num_images + (image_index - (nth_index % num_images))) % num_images
 	change_image(image_paths[image_index])
 	Globals.update_counter.emit(image_index + 1, num_images)
 
@@ -124,10 +124,23 @@ func _load_cmdline_image() -> void:
 		change_image(path)
 
 func _files_dropped(paths:PackedStringArray) -> void:
-	# ignore extra paths for now
-	var path:String = paths[0]
-	create_paths_array(path)
-	change_image(path)
+	var tmp_paths:Array[String] = []
+	for path:String in paths:
+		if not FileAccess.file_exists(path): continue
+		var extension:String = path.get_extension().to_lower()
+		if not supported_formats.has(extension): continue
+		tmp_paths.append(path)
+	
+	if tmp_paths.size() == 1:
+		var path:String = tmp_paths[0]
+		create_paths_array(path)
+		change_image(path)
+	
+	elif tmp_paths.size() > 1:
+		image_paths = tmp_paths
+		change_image(tmp_paths[0])
+		image_index = 0
+		Globals.update_counter.emit(image_index + 1, image_paths.size())
 
 func change_image(path:String) -> void:
 	if use_history and history.has(path) and history[path] is ImageTexture:
@@ -185,18 +198,19 @@ func load_image(index:int, path:String) -> void:
 	thread.start(_load_image.bindv([index, path, thread]))
 
 func _load_image(index:int, path:String, thread:Thread) -> void:
-	if not FileAccess.file_exists(path): return
-	if index != image_index: return
+	if not FileAccess.file_exists(path) or index != image_index:
+		thread.wait_to_finish.call_deferred()
+		return
 	
 	var image:Image = Image.new()
-	if index != image_index: return
 	var error:int = image.load(path)
-	if error != OK: return
-	if index != image_index: return
+	if error != OK or index != image_index:
+		thread.wait_to_finish.call_deferred()
+		return
 	
 	var texture:ImageTexture = ImageTexture.create_from_image(image)
-	if index != image_index: return
-	_finished.call_deferred(index, path, texture)
+	if index == image_index: 
+		_finished.call_deferred(index, path, texture)
 	thread.wait_to_finish.call_deferred()
 
 func _finished(index:int, path:String, texture:ImageTexture) -> void:
