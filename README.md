@@ -25,11 +25,12 @@
 - Down-arrowkey : change to nth next image (10 by default)
   - arrowkeys will both loop back to other side when end is reached
 ---
+- F1 : maximize
+- F2 : toggle titlebar
+- F3 : toggle image border
+- F4/F11 : fullscreen
 - F5 : refreshes the list of paths (if images added/removed/renamed)
-- F8 or ESC : exit program
-- F9 : toggle titlebar visibility
-- F10 : toggle maximized (currently broken)
-- F11 : toggle fullscreen
+- ESC : exit program
 
 ### Notes
 - rotation and zoom are both relevant to the center of the window, not the center of the image
