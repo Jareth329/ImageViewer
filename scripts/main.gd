@@ -45,6 +45,7 @@ func _unhandled_input(event:InputEvent) -> void:
 		elif ev.keycode == KEY_RIGHT: next_image(1)
 		elif ev.keycode == KEY_UP: prev_image(virtual_row_size)
 		elif ev.keycode == KEY_DOWN: next_image(virtual_row_size)
+		elif ev.keycode == KEY_F5: refresh_list()
 		elif ev.keycode == KEY_F8 or ev.keycode == KEY_ESCAPE: get_tree().quit()
 		elif ev.keycode == KEY_F9: _update_titlebar_visibility()
 		elif ev.keycode == KEY_F10: _set_window_mode(Window.MODE_MAXIMIZED)
@@ -113,6 +114,12 @@ func next_image(nth_index:int) -> void:
 	image_index = (image_index + nth_index) % num_images
 	change_image(image_paths[image_index])
 	Globals.update_counter.emit(image_index + 1, num_images)
+
+func refresh_list() -> void:
+	if image_paths.is_empty(): return
+	var path:String = image_paths[image_index]
+	create_paths_array(path)
+	resize_window()
 #endregion
 
 #region IO
