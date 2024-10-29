@@ -44,8 +44,8 @@
 ### Issues
 - maximized mode (with F10 key) currently does not work, need to look into
 
-- - if zoomed in to an image (not center) and panning and spin mouse cursor in circles; camera will move towards center of image
-- this is currently fixed, most likely it is an issued with the DAMPED mode for panning
+- if zoomed in to an image (not center) and panning and spin mouse cursor in circles; camera will move towards center of image
+ - this is currently fixed, most likely it is an issued with the DAMPED mode for panning
 
 - no error displayed in program when image fails to load
   - most issues will be fixed by the move to csharp
