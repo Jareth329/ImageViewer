@@ -10,8 +10,11 @@ const win_icon:Texture = preload("res://assets/windowed.png")
 @onready var maximize:Button = $vbox/titlebar/margin/hbox/maximize
 @onready var close:Button = $vbox/titlebar/margin/hbox/close
 @onready var view:MarginContainer = $vbox/margin
+@onready var fake_title:Label = $vbox/titlebar/margin/hbox/label
 var supported_formats:PackedStringArray = [ "jpg", "jpeg", "jfif", "png", "bmp", "dds", "ktx", "exr", "hdr", "tga", "svg", "webp" ]
 enum ImageType { JPEG, PNG, WEBP }
+enum TitlebarMode { REAL, FAKE, NONE }
+enum SpaceMode { MINIMAL, FULL, FULL_IGNORE_ASPECT }
 #endregion
 
 #region Settings
@@ -23,10 +26,12 @@ var history_max_size:int = 10
 var virtual_row_size:int = 4 # make customizable
 var window_max_size_percent:float = 0.75
 var always_use_full_space:bool = true
-var full_space_percent:float = 0.95 # how close to Right/Bottom borders does it get when using full space
+var full_space_percent:Vector2 = Vector2(0.995, 0.95) # how close to Right/Bottom borders does it get when using full space
 #endregion
 
 #region Variables
+var titlebar_mode:TitlebarMode = TitlebarMode.FAKE
+var space_mode:SpaceMode = SpaceMode.MINIMAL
 var image_index:int = 0
 var image_dimensions:Vector2i = Vector2i.ZERO
 var image_paths:Array[String] = []
@@ -59,9 +64,7 @@ func _unhandled_input(event:InputEvent) -> void:
 		elif ev.keycode == KEY_Z: 
 			use_horizontal_fit = not use_horizontal_fit
 			resize_window()
-		elif ev.keycode == KEY_X: 
-			always_use_full_space = not always_use_full_space
-			resize_window()
+		elif ev.keycode == KEY_X: _toggle_space_mode()
 		elif ev.keycode == KEY_LEFT: prev_image(1)
 		elif ev.keycode == KEY_RIGHT: next_image(1)
 		elif ev.keycode == KEY_UP: prev_image(virtual_row_size)
@@ -92,9 +95,25 @@ func _toggle_view_margin() -> void:
 		counter.anchor_bottom = 0.99
 		counter.anchor_right = 0.985
 
+func _toggle_space_mode() -> void:
+	if space_mode == SpaceMode.MINIMAL: space_mode = SpaceMode.FULL
+	elif space_mode == SpaceMode.FULL: space_mode = SpaceMode.FULL_IGNORE_ASPECT
+	else: space_mode = SpaceMode.MINIMAL
+	resize_window()
+
 func _update_titlebar_visibility() -> void:
-	#get_tree().root.borderless = not get_tree().root.borderless
-	titlebar.visible = not titlebar.visible
+	if titlebar_mode == TitlebarMode.REAL:
+		titlebar_mode = TitlebarMode.FAKE
+		get_tree().root.borderless = true
+		titlebar.visible = true
+	elif titlebar_mode == TitlebarMode.FAKE:
+		titlebar_mode = TitlebarMode.NONE
+		titlebar.visible = false
+		get_tree().root.borderless = true
+	else:
+		titlebar_mode = TitlebarMode.REAL
+		get_tree().root.borderless = false
+		titlebar.visible = false
 	if get_tree().root.mode == Window.MODE_WINDOWED:
 		resize_window()
 
@@ -121,7 +140,9 @@ func _set_window_mode(mode:int) -> void:
 			get_tree().root.mode = Window.MODE_WINDOWED
 
 func update_ui(image_name:String, image_dims:Vector2) -> void:
-	get_tree().root.title = "(%d x %d) %s" % [image_dims.x, image_dims.y, image_name]
+	var title:String = "(%d x %d) %s" % [image_dims.x, image_dims.y, image_name]
+	get_tree().root.title = title
+	fake_title.text = title
 	
 	if reset_camera_on_image_change: 
 		display.reset_camera_state()
@@ -153,8 +174,8 @@ func resize_window(too_large:bool=false) -> void:
 	var window_max_size:Vector2i = screen_size * window_max_size_percent
 	var window_pos:Vector2i = _get_window_position()
 	
-	if too_large or always_use_full_space:
-		window_max_size = (screen_size - window_pos) * full_space_percent
+	if too_large or space_mode != SpaceMode.MINIMAL:
+		window_max_size = Vector2(screen_size - window_pos) * full_space_percent
 	
 	titlebar.custom_minimum_size = screen_size * 0.03
 	minimize.custom_minimum_size.x = screen_size.y * 0.05
@@ -165,18 +186,19 @@ func resize_window(too_large:bool=false) -> void:
 	var _size:Vector2i = window_max_size
 	var image_aspect:float = calc_image_aspect()
 	
-	if use_horizontal_fit or (image_aspect > 1 and image_aspect >= max_aspect):
-		_size.y = window_max_size.x / image_aspect
-		if _size.y > window_max_size.y and not use_horizontal_fit:
-			var ratio:float = float(window_max_size.y) / _size.y
-			_size.y = window_max_size.y
-			_size.x *= ratio
-	else: 
-		_size.x = window_max_size.y * image_aspect
-		if _size.x > window_max_size.x:
-			var ratio:float = float(window_max_size.x) / _size.x
-			_size.x = window_max_size.x
-			_size.y *= ratio
+	if space_mode != SpaceMode.FULL_IGNORE_ASPECT:
+		if use_horizontal_fit or (image_aspect > 1 and image_aspect >= max_aspect):
+			_size.y = window_max_size.x / image_aspect
+			if _size.y > window_max_size.y and not use_horizontal_fit:
+				var ratio:float = float(window_max_size.y) / _size.y
+				_size.y = window_max_size.y
+				_size.x *= ratio
+		else: 
+			_size.x = window_max_size.y * image_aspect
+			if _size.x > window_max_size.x:
+				var ratio:float = float(window_max_size.x) / _size.x
+				_size.x = window_max_size.x
+				_size.y *= ratio
 	
 	if not too_large and not always_use_full_space:
 		var tmp_size:Vector2i = _size + window_pos
