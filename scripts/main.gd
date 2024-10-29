@@ -1,7 +1,13 @@
 extends Control
 
 #region (Effective) Constants
-@onready var display:Display = $margin/display_image as Display
+@onready var display:Display = $vbox/margin/display_image as Display
+@onready var titlebar:ColorRect = $vbox/titlebar
+@onready var counter:PanelContainer = $counter
+@onready var minimize:Button = $vbox/titlebar/margin/hbox/minimize
+@onready var maximize:Button = $vbox/titlebar/margin/hbox/maximize
+@onready var close:Button = $vbox/titlebar/margin/hbox/close
+@onready var view:MarginContainer = $vbox/margin
 var supported_formats:PackedStringArray = [ "jpg", "jpeg", "jfif", "png", "bmp", "dds", "ktx", "exr", "hdr", "tga", "svg", "webp" ]
 enum ImageType { JPEG, PNG, WEBP }
 #endregion
@@ -288,4 +294,35 @@ func _finished(index:int, path:String, texture:ImageTexture) -> void:
 	image_aspect = image_dimensions.x / image_dimensions.y
 	update_ui(path.get_file(), image_dimensions)
 	display.change_image(texture, image_aspect)
+
+#region Title Bar
+func _on_minimize_pressed() -> void:
+	get_tree().root.mode = Window.MODE_MINIMIZED
+	minimize.release_focus()
+
+func _on_maximize_pressed() -> void:
+	_set_window_mode(Window.MODE_MAXIMIZED)
+	maximize.release_focus()
+
+func _on_close_pressed() -> void:
+	get_tree().quit()
+
+var dragging:bool = false
+func _on_titlebar_gui_input(event:InputEvent) -> void:
+	if event is InputEventMouseButton:
+		var ev:InputEventMouseButton = event as InputEventMouseButton
+		if not ev.pressed: # prevent events from firing twice
+			dragging = false
+			resize_window()
+		elif ev.button_index == MOUSE_BUTTON_LEFT: 
+			dragging = true
+	elif event is InputEventMouseMotion:
+		var ev:InputEventMouseMotion = event as InputEventMouseMotion
+		if dragging: 
+			get_tree().root.position += Vector2i(ev.relative)
+			# prevent glitch where it rapidly alternates between 2 positions
+			var tb_center:Vector2 = (titlebar.size - titlebar.position) / 2
+			tb_center *= 1.5
+			if ev.relative.x > tb_center.x or ev.relative.y > tb_center.y:
+				dragging = false
 #endregion
