@@ -152,9 +152,9 @@ func _files_dropped(paths:PackedStringArray) -> void:
 func change_image(path:String) -> void:
 	if use_history and history.has(path) and history[path] is ImageTexture:
 		var _texture:ImageTexture = history[path] as ImageTexture
-		var _tmp:Vector2 = _texture.get_image().get_size()
-		image_aspect = _tmp.x / _tmp.y
-		update_ui(path.get_file())
+		var _image_dimensions:Vector2 = _texture.get_image().get_size()
+		image_aspect = _image_dimensions.x / _image_dimensions.y
+		update_ui(path.get_file(), _image_dimensions)
 		display.change_image(_texture, image_aspect)
 		return 
 	
@@ -169,9 +169,9 @@ func change_image(path:String) -> void:
 	
 	var texture:ImageTexture = ImageTexture.create_from_image(image)
 	if use_history: add_to_history(path, texture)
-	var tmp:Vector2 = image.get_size()
-	image_aspect = tmp.x / tmp.y
-	update_ui(path.get_file())
+	var image_dimensions:Vector2 = image.get_size()
+	image_aspect = image_dimensions.x / image_dimensions.y
+	update_ui(path.get_file(), image_dimensions)
 	display.change_image(texture, image_aspect)
 
 func create_paths_array(path:String) -> void:
@@ -223,8 +223,8 @@ func _load_image(index:int, path:String, thread:Thread) -> void:
 func _finished(index:int, path:String, texture:ImageTexture) -> void:
 	if index != image_index: return
 	if use_history: add_to_history(path, texture)
-	var tmp:Vector2 = texture.get_image().get_size()
-	image_aspect = tmp.x / tmp.y
-	update_ui(path.get_file())
+	var image_dimensions:Vector2 = texture.get_image().get_size()
+	image_aspect = image_dimensions.x / image_dimensions.y
+	update_ui(path.get_file(), image_dimensions)
 	display.change_image(texture, image_aspect)
 #endregion
