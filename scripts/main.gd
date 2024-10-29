@@ -11,7 +11,7 @@ var reset_camera_on_image_change:bool = true
 var use_threading:bool = true
 var use_history:bool = true
 var history_max_size:int = 10
-var virtual_row_size:int = 10
+var virtual_row_size:int = 4 # make customizable
 var window_max_size_percent:float = 0.75
 var window_max_size:Vector2 = Vector2(960, 720)
 #endregion
