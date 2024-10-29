@@ -24,7 +24,7 @@ class_name Display extends TextureRect
 
 #region Viewport Settings
 @export_category("Viewport")
-@export var viewport_size:Vector2 = Vector2(2560, 1440)
+@export var viewport_size:Vector2 = Vector2(3840, 2160)
 #endregion
 
 #region Zoom Settings
@@ -42,10 +42,10 @@ class_name Display extends TextureRect
 enum Pan { FREE, DAMPED, CONSTRAINED }
 @export_category("Pan")
 @export var allow_pan:bool = true
-@export var pan_mode:Pan = Pan.DAMPED
+@export var pan_mode:Pan = Pan.CONSTRAINED
 @export var pan_limit:float = 0.5 # what percentage of image can leave window at default zoom
 @export var pan_step:float = 0.4
-@export var pan_speed:float = 0.3
+@export var pan_speed:float = 0.7
 @export var pan_damping_start:float = 0.5 # distance from center as a percentage (0=always damp, 1=same as constrained)
 #endregion
 
@@ -89,6 +89,8 @@ func _ready() -> void:
 	viewport.size = viewport_size
 	image.size = viewport_size
 	camera.position = viewport_size / 2
+	
+	toggle_filter()
 
 func reset_camera_state() -> void:
 	camera.zoom = default_zoom
