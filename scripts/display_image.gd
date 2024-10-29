@@ -72,6 +72,8 @@ var rotating:bool = false
 var fast_zooming:bool = false
 var viewport_aspect:float = viewport_size.x / viewport_size.y # needs to be updated when viewport_size changes
 var image_aspect:float = 1.0
+var ctrl_pressed:bool = false
+var shift_pressed:bool = false
 #endregion
 
 #region Functions
@@ -126,6 +128,13 @@ func change_image(_texture:ImageTexture, _aspect:float) -> void:
 func _unhandled_input(event:InputEvent) -> void:
 	if event is InputEventKey:
 		var ev:InputEventKey = event as InputEventKey
+		if ev.keycode == KEY_CTRL:
+			if ev.pressed: ctrl_pressed = true
+			else: ctrl_pressed = false
+		if ev.keycode == KEY_SHIFT:
+			if ev.pressed: shift_pressed = true
+			else: shift_pressed = false
+		
 		if not ev.pressed: return
 		if ev.keycode == KEY_F5 or ev.keycode == KEY_R: reset_camera_state()
 		elif ev.keycode == KEY_H: image.flip_h = not image.flip_h
@@ -141,15 +150,21 @@ func _on_gui_input(event:InputEvent) -> void:
 			fast_zooming = false
 			return
 		elif ev.button_index == MOUSE_BUTTON_WHEEL_UP:
-			if allow_zoom and use_scrollwheel: # zoom in
-				if use_point_zoom: zoom_to_point(zoom_step, ev.position)
-				else: zoom_to_center(zoom_step)
-			else: Globals.prev_pressed.emit(1)
+			if ctrl_pressed:
+				if allow_zoom and use_scrollwheel: # zoom in
+					if use_point_zoom: zoom_to_point(zoom_step, ev.position)
+					else: zoom_to_center(zoom_step)
+				else: Globals.prev_pressed.emit(1)
+			elif shift_pressed: camera.offset.y -= pan_speed * 280
+			else: Globals.prev_pressed.emit(1) # change image
 		elif ev.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-			if allow_zoom and use_scrollwheel: # zoom out
-				if use_point_zoom: zoom_to_point(-zoom_step, ev.position)
-				else: zoom_to_center(-zoom_step)
-			else: Globals.next_pressed.emit(1)
+			if ctrl_pressed:
+				if allow_zoom and use_scrollwheel: # zoom out
+					if use_point_zoom: zoom_to_point(-zoom_step, ev.position)
+					else: zoom_to_center(-zoom_step)
+				else: Globals.next_pressed.emit(1)
+			elif shift_pressed: camera.offset.y += pan_speed * 280
+			else: Globals.next_pressed.emit(1) # change image 
 		elif ev.button_index == MOUSE_BUTTON_LEFT: panning = true
 		elif ev.button_index == MOUSE_BUTTON_MIDDLE: fast_zooming = true
 		elif ev.button_index == MOUSE_BUTTON_RIGHT: rotating = true
@@ -229,6 +244,9 @@ func pan(relative_position:Vector2) -> void:
 	var zoom_mult:float = (zoom_max / camera.zoom.x) * 0.07
 	var new_offset:Vector2 = Vector2(rmultx, rmulty) *  zoom_mult * pan_speed
 	var limit:Vector2 = viewport.size * pan_limit
+	
+	#var speed_mult:float = float(viewport.size.x) / 2560
+	#new_offset *= speed_mult
 	
 	# sets the pan speed to 0 at the perimeter
 	if pan_mode == Pan.CONSTRAINED:
