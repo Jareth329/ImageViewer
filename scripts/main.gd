@@ -38,6 +38,13 @@ func _ready() -> void:
 	get_tree().root.ready.connect(_load_cmdline_image)
 	Globals.prev_pressed.connect(prev_image)
 	Globals.next_pressed.connect(next_image)
+	
+	# update when window resizes
+	var screen_size:Vector2i = DisplayServer.screen_get_size()
+	titlebar.custom_minimum_size = screen_size * 0.03
+	minimize.custom_minimum_size.x = screen_size.y * 0.05
+	maximize.custom_minimum_size.x = screen_size.y * 0.05
+	close.custom_minimum_size.x = screen_size.y * 0.05
 
 #region User Input
 func _unhandled_input(event:InputEvent) -> void:
@@ -128,6 +135,11 @@ func resize_window(too_large:bool=false) -> void:
 	
 	if too_large or always_use_full_space:
 		window_max_size = (screen_size - window_pos) * full_space_percent
+	
+	titlebar.custom_minimum_size = screen_size * 0.03
+	minimize.custom_minimum_size.x = screen_size.y * 0.05
+	maximize.custom_minimum_size.x = screen_size.y * 0.05
+	close.custom_minimum_size.x = screen_size.y * 0.05
 	
 	var max_aspect:float = float(window_max_size.x) / window_max_size.y
 	var _size:Vector2i = window_max_size
