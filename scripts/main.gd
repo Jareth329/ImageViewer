@@ -44,7 +44,9 @@ func _unhandled_input(event:InputEvent) -> void:
 		elif ev.keycode == KEY_Z: 
 			use_horizontal_fit = not use_horizontal_fit
 			resize_window()
-		elif ev.keycode == KEY_X: always_use_full_space = not always_use_full_space
+		elif ev.keycode == KEY_X: 
+			always_use_full_space = not always_use_full_space
+			resize_window()
 		elif ev.keycode == KEY_LEFT: prev_image(1)
 		elif ev.keycode == KEY_RIGHT: next_image(1)
 		elif ev.keycode == KEY_UP: prev_image(virtual_row_size)
