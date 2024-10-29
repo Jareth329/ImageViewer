@@ -1,6 +1,8 @@
 extends Control
 
 #region (Effective) Constants
+const max_icon:Texture = preload("res://assets/maximize.png")
+const win_icon:Texture = preload("res://assets/windowed.png")
 @onready var display:Display = $vbox/margin/display_image as Display
 @onready var titlebar:ColorRect = $vbox/titlebar
 @onready var counter:PanelContainer = $counter
@@ -105,10 +107,12 @@ func _set_window_mode(mode:int) -> void:
 		# if windowed or fullscreen; set to maximized
 		if curr_mode != Window.MODE_MAXIMIZED:
 			get_tree().root.mode = Window.MODE_MAXIMIZED
+			maximize.icon = win_icon
 		else:
 			# does not unmaximize by default; fix by setting to fullscreen first
 			get_tree().root.mode = Window.MODE_FULLSCREEN
 			get_tree().root.mode = Window.MODE_WINDOWED
+			maximize.icon = max_icon
 	elif mode == Window.MODE_FULLSCREEN:
 		# if maximized or windowed; set to fullscreen
 		if curr_mode != Window.MODE_FULLSCREEN:
