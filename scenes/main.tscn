@@ -1,8 +1,24 @@
-[gd_scene load_steps=6 format=3 uid="uid://cy1viomu6flei"]
+[gd_scene load_steps=15 format=3 uid="uid://cy1viomu6flei"]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1_7jfm0"]
 [ext_resource type="PackedScene" uid="uid://creb6b8g4cbfk" path="res://scenes/display_image.tscn" id="1_k2wpq"]
+[ext_resource type="Texture2D" uid="uid://cxydgt6hkj6xy" path="res://assets/icon.svg" id="2_3dgsn"]
 [ext_resource type="Script" path="res://scripts/counter.gd" id="2_r50gq"]
+[ext_resource type="Texture2D" uid="uid://svpc3xwot5m7" path="res://assets/minimize.PNG" id="3_4nc6d"]
+[ext_resource type="Texture2D" uid="uid://cn5mdmrwt3qy1" path="res://assets/maximize.PNG" id="4_86ujm"]
+[ext_resource type="Texture2D" uid="uid://pc8gvyg85r2i" path="res://assets/close.PNG" id="5_eyynb"]
+
+[sub_resource type="SystemFont" id="SystemFont_8j17d"]
+oversampling = 10.0
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_8mlwp"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_f3jwo"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_3g0we"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_sennt"]
+bg_color = Color(1, 0, 0, 1)
 
 [sub_resource type="ViewportTexture" id="ViewportTexture_3ee8n"]
 viewport_path = NodePath("viewport")
@@ -20,38 +36,120 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
 mouse_filter = 2
 script = ExtResource("1_7jfm0")
 
-[node name="margin" type="MarginContainer" parent="."]
+[node name="vbox" type="VBoxContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/separation = 0
+
+[node name="titlebar" type="ColorRect" parent="vbox"]
+custom_minimum_size = Vector2(0, 31.5)
+layout_mode = 2
+color = Color(0, 0, 0, 1)
+
+[node name="margin" type="MarginContainer" parent="vbox/titlebar"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/margin_left = 2
+theme_override_constants/margin_top = 2
+theme_override_constants/margin_right = 2
+theme_override_constants/margin_bottom = 2
+
+[node name="hbox" type="HBoxContainer" parent="vbox/titlebar/margin"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 0
+
+[node name="space1" type="Control" parent="vbox/titlebar/margin/hbox"]
+custom_minimum_size = Vector2(4, 0)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="app_icon" type="TextureRect" parent="vbox/titlebar/margin/hbox"]
+custom_minimum_size = Vector2(20, 20)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("2_3dgsn")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="space2" type="Control" parent="vbox/titlebar/margin/hbox"]
+custom_minimum_size = Vector2(8, 0)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="label" type="Label" parent="vbox/titlebar/margin/hbox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = SubResource("SystemFont_8j17d")
+theme_override_font_sizes/font_size = 12
+text = "(333 x 3333) image name.webp"
+clip_text = true
+text_overrun_behavior = 1
+
+[node name="minimize" type="Button" parent="vbox/titlebar/margin/hbox"]
+layout_mode = 2
+theme_override_styles/focus = SubResource("StyleBoxEmpty_8mlwp")
+icon = ExtResource("3_4nc6d")
+icon_alignment = 1
+
+[node name="maximize" type="Button" parent="vbox/titlebar/margin/hbox"]
+layout_mode = 2
+theme_override_styles/focus = SubResource("StyleBoxEmpty_f3jwo")
+icon = ExtResource("4_86ujm")
+icon_alignment = 1
+
+[node name="close" type="Button" parent="vbox/titlebar/margin/hbox"]
+layout_mode = 2
+theme_override_styles/focus = SubResource("StyleBoxEmpty_3g0we")
+theme_override_styles/hover = SubResource("StyleBoxFlat_sennt")
+icon = ExtResource("5_eyynb")
+icon_alignment = 1
+
+[node name="margin" type="MarginContainer" parent="vbox"]
+layout_mode = 2
+size_flags_vertical = 3
 theme_override_constants/margin_left = 0
 theme_override_constants/margin_top = 0
 theme_override_constants/margin_right = 0
 theme_override_constants/margin_bottom = 0
 
-[node name="display_image" parent="margin" instance=ExtResource("1_k2wpq")]
+[node name="color" type="ColorRect" parent="vbox/margin"]
+layout_mode = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 1)
+
+[node name="display_image" parent="vbox/margin" instance=ExtResource("1_k2wpq")]
 layout_mode = 2
 texture = SubResource("ViewportTexture_3ee8n")
 
 [node name="counter" type="PanelContainer" parent="."]
 layout_mode = 1
 anchors_preset = -1
-anchor_left = 1.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -59.0
-offset_top = -40.0
-offset_right = -5.0
-offset_bottom = -5.0
+anchor_left = 0.985
+anchor_top = 0.99
+anchor_right = 0.985
+anchor_bottom = 0.99
+offset_left = -78.0
+offset_top = -35.0
 grow_horizontal = 0
 grow_vertical = 0
+mouse_filter = 2
 script = ExtResource("2_r50gq")
 
 [node name="label" type="Label" parent="counter"]
@@ -59,3 +157,8 @@ layout_mode = 2
 theme_override_fonts/font = SubResource("SystemFont_voblq")
 text = " 999 / 999 "
 horizontal_alignment = 1
+
+[connection signal="gui_input" from="vbox/titlebar" to="." method="_on_titlebar_gui_input"]
+[connection signal="pressed" from="vbox/titlebar/margin/hbox/minimize" to="." method="_on_minimize_pressed"]
+[connection signal="pressed" from="vbox/titlebar/margin/hbox/maximize" to="." method="_on_maximize_pressed"]
+[connection signal="pressed" from="vbox/titlebar/margin/hbox/close" to="." method="_on_close_pressed"]
