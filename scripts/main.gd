@@ -26,7 +26,7 @@ var full_space_percent:float = 0.95 # how close to Right/Bottom borders does it 
 
 #region Variables
 var image_index:int = 0
-var image_aspect:float = 1.0
+var image_dimensions:Vector2i = Vector2i.ZERO
 var image_paths:Array[String] = []
 var history_queue:Array[String] = []
 var history:Dictionary = {} # String(path) : ImageTexture(image)
@@ -115,6 +115,12 @@ func _get_window_position() -> Vector2i:
 		screen += 1
 	return window_pos
 
+func calc_image_aspect() -> float:
+	if titlebar.visible:
+		# may need to be adjusted for other screens
+		return (image_dimensions.x as float / image_dimensions.y) * 0.965
+	return image_dimensions.x as float / image_dimensions.y
+
 func resize_window(too_large:bool=false) -> void:
 	var screen_size:Vector2i = DisplayServer.screen_get_size()
 	var window_max_size:Vector2i = screen_size * window_max_size_percent
@@ -125,6 +131,7 @@ func resize_window(too_large:bool=false) -> void:
 	
 	var max_aspect:float = float(window_max_size.x) / window_max_size.y
 	var _size:Vector2i = window_max_size
+	var image_aspect:float = calc_image_aspect()
 	
 	if use_horizontal_fit or (image_aspect > 1 and image_aspect >= max_aspect):
 		_size.y = window_max_size.x / image_aspect
@@ -199,10 +206,9 @@ func _files_dropped(paths:PackedStringArray) -> void:
 func change_image(path:String) -> void:
 	if use_history and history.has(path) and history[path] is ImageTexture:
 		var _texture:ImageTexture = history[path] as ImageTexture
-		var _image_dimensions:Vector2 = _texture.get_image().get_size()
-		image_aspect = _image_dimensions.x / _image_dimensions.y
-		update_ui(path.get_file(), _image_dimensions)
-		display.change_image(_texture, image_aspect)
+		image_dimensions = _texture.get_image().get_size()
+		update_ui(path.get_file(), image_dimensions)
+		display.change_image(_texture, image_dimensions.x as float / image_dimensions.y)
 		return 
 	
 	if use_threading: 
@@ -223,10 +229,9 @@ func change_image(path:String) -> void:
 	
 	var texture:ImageTexture = ImageTexture.create_from_image(image)
 	if use_history: add_to_history(path, texture)
-	var image_dimensions:Vector2 = image.get_size()
-	image_aspect = image_dimensions.x / image_dimensions.y
+	image_dimensions = image.get_size()
 	update_ui(path.get_file(), image_dimensions)
-	display.change_image(texture, image_aspect)
+	display.change_image(texture, image_dimensions.x as float / image_dimensions.y)
 
 func _load_custom(path:String, image:Image, type:ImageType) -> Array:
 	var err:int = -1
@@ -290,10 +295,10 @@ func _load_image(index:int, path:String, thread:Thread) -> void:
 func _finished(index:int, path:String, texture:ImageTexture) -> void:
 	if index != image_index: return
 	if use_history: add_to_history(path, texture)
-	var image_dimensions:Vector2 = texture.get_image().get_size()
-	image_aspect = image_dimensions.x / image_dimensions.y
+	image_dimensions = texture.get_image().get_size()
 	update_ui(path.get_file(), image_dimensions)
-	display.change_image(texture, image_aspect)
+	display.change_image(texture, image_dimensions.x as float / image_dimensions.y)
+#endregion
 
 #region Title Bar
 func _on_minimize_pressed() -> void:
