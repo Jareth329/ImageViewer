@@ -2,7 +2,8 @@ extends Control
 
 #region (Effective) Constants
 @onready var display:Display = $margin/display_image as Display
-var supported_formats:PackedStringArray = [ "jpg", "jpeg", "png", "bmp", "dds", "ktx", "exr", "hdr", "tga", "svg", "webp" ]
+var supported_formats:PackedStringArray = [ "jpg", "jpeg", "jfif", "png", "bmp", "dds", "ktx", "exr", "hdr", "tga", "svg", "webp" ]
+enum ImageType { JPEG, PNG, WEBP }
 #endregion
 
 #region Settings
@@ -165,7 +166,12 @@ func change_image(path:String) -> void:
 	if not FileAccess.file_exists(path): return
 	var image:Image = Image.new()
 	var error:int = image.load(path)
-	if error != OK: return
+	if error != OK: 
+		var ext:String = path.get_extension().to_lower()
+		var result:Array = [-1, null]
+		if ext == "png" or ext == "jfif": result = _load_custom(path, image, ImageType.JPEG)
+		if ext == "jpg" or ext == "jpeg": result = _load_custom(path, image, ImageType.PNG)
+		if result[0] != OK or result[1] == null:
 	
 	var texture:ImageTexture = ImageTexture.create_from_image(image)
 	if use_history: add_to_history(path, texture)
@@ -174,6 +180,11 @@ func change_image(path:String) -> void:
 	update_ui(path.get_file(), image_dimensions)
 	display.change_image(texture, image_aspect)
 
+func _load_custom(path:String, image:Image, type:ImageType) -> Array:
+	var err:int = -1
+	var buf:PackedByteArray = FileAccess.get_file_as_bytes(path)
+	if type == ImageType.JPEG: err = image.load_jpg_from_buffer(buf)
+	elif type == ImageType.PNG: err = image.load_png_from_buffer(buf)
 func create_paths_array(path:String) -> void:
 	image_paths.clear()
 	var folder:String = path.get_base_dir()
@@ -212,8 +223,12 @@ func _load_image(index:int, path:String, thread:Thread) -> void:
 	var image:Image = Image.new()
 	var error:int = image.load(path)
 	if error != OK or index != image_index:
-		thread.wait_to_finish.call_deferred()
-		return
+		var ext:String = path.get_extension().to_lower()
+		var result:Array = [-1, null]
+		if ext == "png" or ext == "jfif": result = _load_custom(path, image, ImageType.JPEG)
+		if ext == "jpg" or ext == "jpeg": result = _load_custom(path, image, ImageType.PNG)
+		if result[0] != OK or result[1] == null or index != image_index:
+			thread.wait_to_finish.call_deferred()
 	
 	var texture:ImageTexture = ImageTexture.create_from_image(image)
 	if index == image_index: 
