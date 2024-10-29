@@ -76,7 +76,8 @@ func _toggle_background_transparency() -> void:
 	get_tree().root.transparent_bg = not get_tree().root.transparent_bg
 
 func _update_titlebar_visibility() -> void:
-	get_tree().root.borderless = not get_tree().root.borderless
+	#get_tree().root.borderless = not get_tree().root.borderless
+	titlebar.visible = not titlebar.visible
 	if get_tree().root.mode == Window.MODE_WINDOWED:
 		resize_window()
 
@@ -96,7 +97,7 @@ func _set_window_mode(mode:int) -> void:
 	elif mode == Window.MODE_FULLSCREEN:
 		# if maximized or windowed; set to fullscreen
 		if curr_mode != Window.MODE_FULLSCREEN:
-			get_tree().root.mode = Window.MODE_FULLSCREEN
+			get_tree().root.mode = Window.MODE_EXCLUSIVE_FULLSCREEN
 		else:
 			get_tree().root.mode = Window.MODE_WINDOWED
 
