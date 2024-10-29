@@ -378,6 +378,8 @@ func _on_titlebar_gui_input(event:InputEvent) -> void:
 	elif event is InputEventMouseMotion:
 		var ev:InputEventMouseMotion = event as InputEventMouseMotion
 		if dragging: 
+			if get_tree().root.mode == Window.MODE_MAXIMIZED:
+				_set_window_mode(Window.MODE_MAXIMIZED)
 			get_tree().root.position += Vector2i(ev.relative)
 			# prevent glitch where it rapidly alternates between 2 positions
 			var tb_center:Vector2 = (titlebar.size - titlebar.position) / 2
