@@ -10,10 +10,12 @@ enum ImageType { JPEG, PNG, WEBP }
 var reset_camera_on_image_change:bool = true
 var use_threading:bool = true
 var use_history:bool = true
+var use_horizontal_fit:bool = false
 var history_max_size:int = 10
 var virtual_row_size:int = 4 # make customizable
 var window_max_size_percent:float = 0.75
-var window_max_size:Vector2 = Vector2(960, 720)
+var always_use_full_space:bool = true
+var full_space_percent:float = 0.95 # how close to Right/Bottom borders does it get when using full space
 #endregion
 
 #region Variables
@@ -30,18 +32,19 @@ func _ready() -> void:
 	get_tree().root.ready.connect(_load_cmdline_image)
 	Globals.prev_pressed.connect(prev_image)
 	Globals.next_pressed.connect(next_image)
-	
-	# calc max window size
-	var screen_size:Vector2i = DisplayServer.screen_get_size()
-	window_max_size = screen_size * window_max_size_percent
 
 #region User Input
 func _unhandled_input(event:InputEvent) -> void:
 	if event is InputEventKey:
 		var ev:InputEventKey = event as InputEventKey
 		if not ev.pressed: return
+		# H V F R are used by display_image
 		if ev.keycode == KEY_TAB: Globals.update_visibility_ui.emit()
 		elif ev.keycode == KEY_B: _toggle_background_transparency()
+		elif ev.keycode == KEY_Z: 
+			use_horizontal_fit = not use_horizontal_fit
+			resize_window()
+		elif ev.keycode == KEY_X: always_use_full_space = not always_use_full_space
 		elif ev.keycode == KEY_LEFT: prev_image(1)
 		elif ev.keycode == KEY_RIGHT: next_image(1)
 		elif ev.keycode == KEY_UP: prev_image(virtual_row_size)
@@ -91,13 +94,48 @@ func update_ui(image_name:String, image_dims:Vector2) -> void:
 	if get_tree().root.mode == Window.MODE_WINDOWED:
 		resize_window()
 
-func resize_window() -> void:
-	var max_aspect:float = float(window_max_size.x) / window_max_size.y
-	var _size:Vector2 = window_max_size
+func _get_window_position() -> Vector2i:
+	var curr_screen_size:Vector2i = DisplayServer.screen_get_size()
+	var window_pos:Vector2i = DisplayServer.window_get_position()
+	var screen:int = 0
+	while window_pos.x > curr_screen_size.x:
+		window_pos.x -= DisplayServer.screen_get_size(screen).x
+		screen += 1
+	screen = 0
+	while window_pos.y > curr_screen_size.y:
+		window_pos.y -= DisplayServer.screen_get_size(screen).y
+		screen += 1
+	return window_pos
+
+func resize_window(too_large:bool=false) -> void:
+	var screen_size:Vector2i = DisplayServer.screen_get_size()
+	var window_max_size:Vector2i = screen_size * window_max_size_percent
+	var window_pos:Vector2i = _get_window_position()
 	
-	if image_aspect > 1 and image_aspect >= max_aspect:
+	if too_large or always_use_full_space:
+		window_max_size = (screen_size - window_pos) * full_space_percent
+	
+	var max_aspect:float = float(window_max_size.x) / window_max_size.y
+	var _size:Vector2i = window_max_size
+	
+	if use_horizontal_fit or (image_aspect > 1 and image_aspect >= max_aspect):
 		_size.y = window_max_size.x / image_aspect
-	else: _size.x = window_max_size.y * image_aspect
+		if _size.y > window_max_size.y and not use_horizontal_fit:
+			var ratio:float = float(window_max_size.y) / _size.y
+			_size.y = window_max_size.y
+			_size.x *= ratio
+	else: 
+		_size.x = window_max_size.y * image_aspect
+		if _size.x > window_max_size.x:
+			var ratio:float = float(window_max_size.x) / _size.x
+			_size.x = window_max_size.x
+			_size.y *= ratio
+	
+	if not too_large and not always_use_full_space:
+		var tmp_size:Vector2i = _size + window_pos
+		if tmp_size.x > screen_size.x or tmp_size.y > screen_size.y:
+			resize_window(true)
+			return
 	
 	get_tree().root.size = _size
 	display.resize()
