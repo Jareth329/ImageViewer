@@ -64,16 +64,31 @@ func _unhandled_input(event:InputEvent) -> void:
 		elif ev.keycode == KEY_RIGHT: next_image(1)
 		elif ev.keycode == KEY_UP: prev_image(virtual_row_size)
 		elif ev.keycode == KEY_DOWN: next_image(virtual_row_size)
+		elif ev.keycode == KEY_ESCAPE: get_tree().quit()
+		elif ev.keycode == KEY_F1: _set_window_mode(Window.MODE_MAXIMIZED)
+		elif ev.keycode == KEY_F2: _update_titlebar_visibility()
+		elif ev.keycode == KEY_F3: _toggle_view_margin()
 		elif ev.keycode == KEY_F5: refresh_list()
-		elif ev.keycode == KEY_F8 or ev.keycode == KEY_ESCAPE: get_tree().quit()
-		elif ev.keycode == KEY_F9: _update_titlebar_visibility()
-		elif ev.keycode == KEY_F10: _set_window_mode(Window.MODE_MAXIMIZED)
-		elif ev.keycode == KEY_F11: _set_window_mode(Window.MODE_FULLSCREEN)
+		elif ev.keycode == KEY_F11 or ev.keycode == KEY_F4: _set_window_mode(Window.MODE_FULLSCREEN)
 #endregion
 
 #region User Interface
 func _toggle_background_transparency() -> void:
 	get_tree().root.transparent_bg = not get_tree().root.transparent_bg
+
+func _toggle_view_margin() -> void:
+	if view.get_theme_constant("margin_left") == 0:
+		view.add_theme_constant_override("margin_left", 10)
+		view.add_theme_constant_override("margin_right", 10)
+		view.add_theme_constant_override("margin_bottom", 10)
+		counter.anchor_bottom = 0.9735
+		counter.anchor_right = 0.97
+	else:
+		view.add_theme_constant_override("margin_left", 0)
+		view.add_theme_constant_override("margin_right", 0)
+		view.add_theme_constant_override("margin_bottom", 0)
+		counter.anchor_bottom = 0.99
+		counter.anchor_right = 0.985
 
 func _update_titlebar_visibility() -> void:
 	#get_tree().root.borderless = not get_tree().root.borderless
