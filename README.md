@@ -15,8 +15,8 @@
 - F-key : toggle image filter (nearest / linear)
 - R-key : reset camera/flip state
 - X-key : toggle always use full space
- - currently, on : image resizes from the window origin up to ~5% of the screen away from the edge
- - off : image resizes from window origin up to a maximum of 75% of the screen dimensions
+  - currently, on : image resizes from the window origin up to ~5% of the screen away from the edge
+  - off : image resizes from window origin up to a maximum of 75% of the screen dimensions
 - Z-key : toggle horizontal fit mode (currently not properly implemented)
 ---
 - Left-arrowkey : change to previous image in current folder
@@ -45,7 +45,7 @@
 - maximized mode (with F10 key) currently does not work, need to look into
 
 - if zoomed in to an image (not center) and panning and spin mouse cursor in circles; camera will move towards center of image
- - this is currently fixed, most likely it is an issued with the DAMPED mode for panning
+  - this is currently fixed, most likely it is an issued with the DAMPED mode for panning
 
 - no error displayed in program when image fails to load
   - most issues will be fixed by the move to csharp
