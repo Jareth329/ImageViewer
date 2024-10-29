@@ -136,7 +136,7 @@ func _unhandled_input(event:InputEvent) -> void:
 			else: shift_pressed = false
 		
 		if not ev.pressed: return
-		if ev.keycode == KEY_F5 or ev.keycode == KEY_R: reset_camera_state()
+		if ev.keycode == KEY_R: reset_camera_state() # ev.keycode == KEY_F5 or 
 		elif ev.keycode == KEY_H: image.flip_h = not image.flip_h
 		elif ev.keycode == KEY_V: image.flip_v = not image.flip_v
 		elif ev.keycode == KEY_F: toggle_filter()
