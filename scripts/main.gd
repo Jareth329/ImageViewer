@@ -81,8 +81,8 @@ func _set_window_mode(mode:int) -> void:
 		else:
 			get_tree().root.mode = Window.MODE_WINDOWED
 
-func update_ui(image_name:String) -> void:
-	get_tree().root.title = "ImageViewer - %s" % image_name
+func update_ui(image_name:String, image_dims:Vector2) -> void:
+	get_tree().root.title = "(%d x %d) %s" % [image_dims.x, image_dims.y, image_name]
 	
 	if reset_camera_on_image_change: 
 		display.reset_camera_state()
