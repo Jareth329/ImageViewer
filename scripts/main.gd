@@ -172,6 +172,8 @@ func change_image(path:String) -> void:
 		if ext == "png" or ext == "jfif": result = _load_custom(path, image, ImageType.JPEG)
 		if ext == "jpg" or ext == "jpeg": result = _load_custom(path, image, ImageType.PNG)
 		if result[0] != OK or result[1] == null:
+			return
+		image = result[1]
 	
 	var texture:ImageTexture = ImageTexture.create_from_image(image)
 	if use_history: add_to_history(path, texture)
@@ -185,6 +187,8 @@ func _load_custom(path:String, image:Image, type:ImageType) -> Array:
 	var buf:PackedByteArray = FileAccess.get_file_as_bytes(path)
 	if type == ImageType.JPEG: err = image.load_jpg_from_buffer(buf)
 	elif type == ImageType.PNG: err = image.load_png_from_buffer(buf)
+	return [err, image]
+
 func create_paths_array(path:String) -> void:
 	image_paths.clear()
 	var folder:String = path.get_base_dir()
@@ -229,6 +233,8 @@ func _load_image(index:int, path:String, thread:Thread) -> void:
 		if ext == "jpg" or ext == "jpeg": result = _load_custom(path, image, ImageType.PNG)
 		if result[0] != OK or result[1] == null or index != image_index:
 			thread.wait_to_finish.call_deferred()
+			return
+		image = result[1]
 	
 	var texture:ImageTexture = ImageTexture.create_from_image(image)
 	if index == image_index: 
