@@ -11,7 +11,7 @@ const win_icon:Texture = preload("res://assets/windowed.png")
 @onready var close:Button = $vbox/titlebar/margin/hbox/close
 @onready var view:MarginContainer = $vbox/margin
 @onready var fake_title:Label = $vbox/titlebar/margin/hbox/label
-var supported_formats:PackedStringArray = [ "jpg", "jpeg", "jfif", "png", "bmp", "dds", "ktx", "exr", "hdr", "tga", "svg", "webp" ]
+var supported_formats:PackedStringArray = [ "jpg", "jpeg", "jfif", "png", "bmp", "dds", "ktx", "exr", "hdr", "tga", "svg", "webp", "gif", "apng" ]
 enum ImageType { JPEG, PNG, WEBP }
 enum TitlebarMode { REAL, FAKE, NONE }
 enum SpaceMode { MINIMAL, FULL, FULL_IGNORE_ASPECT }
@@ -41,6 +41,11 @@ var history_queue:Array[String] = []
 var history:Dictionary = {} # String(path) : ImageTexture(image)
 #endregion
 
+func get_current_path() -> String:
+	if image_index > image_paths.size():
+		return ""
+	return image_paths[image_index].replace('\\', '/')
+
 func _ready() -> void:
 	# connect signals
 	get_tree().root.files_dropped.connect(_files_dropped)
@@ -58,6 +63,8 @@ func _ready() -> void:
 	minimize.custom_minimum_size.x = screen_size.y * 0.05
 	maximize.custom_minimum_size.x = screen_size.y * 0.05
 	close.custom_minimum_size.x = screen_size.y * 0.05
+	
+	PyCore.Start()
 
 #region User Input
 func _unhandled_input(event:InputEvent) -> void:
@@ -75,7 +82,9 @@ func _unhandled_input(event:InputEvent) -> void:
 		elif ev.keycode == KEY_RIGHT: next_image(1)
 		elif ev.keycode == KEY_UP: prev_image(virtual_row_size)
 		elif ev.keycode == KEY_DOWN: next_image(virtual_row_size)
-		elif ev.keycode == KEY_ESCAPE: get_tree().quit()
+		elif ev.keycode == KEY_ESCAPE: 
+			PyCore.Stop()
+			get_tree().quit()
 		elif ev.keycode == KEY_F1: _set_window_mode(Window.MODE_MAXIMIZED)
 		elif ev.keycode == KEY_F2: _update_titlebar_visibility()
 		elif ev.keycode == KEY_F3: _toggle_view_margin()
@@ -279,23 +288,27 @@ func change_image(path:String) -> void:
 		load_image(image_index, path)
 		return
 	
-	if not FileAccess.file_exists(path): return
-	var image:Image = Image.new()
-	var error:int = image.load(path)
-	if error != OK: 
-		var ext:String = path.get_extension().to_lower()
-		var result:Array = [-1, null]
-		if ext == "png" or ext == "jfif": result = _load_custom(path, image, ImageType.JPEG)
-		if ext == "jpg" or ext == "jpeg": result = _load_custom(path, image, ImageType.PNG)
-		if result[0] != OK or result[1] == null:
-			return
-		image = result[1]
+	if PyCore.IsAnimation(path):
+		print("ANIMATION")
 	
-	var texture:ImageTexture = ImageTexture.create_from_image(image)
-	if use_history: add_to_history(path, texture)
-	image_dimensions = image.get_size()
-	update_ui(path.get_file(), image_dimensions)
-	display.change_image(texture, image_dimensions.x as float / image_dimensions.y)
+	else:
+		if not FileAccess.file_exists(path): return
+		var image:Image = Image.new()
+		var error:int = image.load(path)
+		if error != OK: 
+			var ext:String = path.get_extension().to_lower()
+			var result:Array = [-1, null]
+			if ext == "png" or ext == "jfif": result = _load_custom(path, image, ImageType.JPEG)
+			if ext == "jpg" or ext == "jpeg": result = _load_custom(path, image, ImageType.PNG)
+			if result[0] != OK or result[1] == null:
+				return
+			image = result[1]
+		
+		var texture:ImageTexture = ImageTexture.create_from_image(image)
+		if use_history: add_to_history(path, texture)
+		image_dimensions = image.get_size()
+		update_ui(path.get_file(), image_dimensions)
+		display.change_image(texture, image_dimensions.x as float / image_dimensions.y)
 
 func _load_custom(path:String, image:Image, type:ImageType) -> Array:
 	var err:int = -1
@@ -339,21 +352,28 @@ func _load_image(index:int, path:String, thread:Thread) -> void:
 		thread.wait_to_finish.call_deferred()
 		return
 	
-	var image:Image = Image.new()
-	var error:int = image.load(path)
-	if error != OK or index != image_index:
-		var ext:String = path.get_extension().to_lower()
-		var result:Array = [-1, null]
-		if ext == "png" or ext == "jfif": result = _load_custom(path, image, ImageType.JPEG)
-		if ext == "jpg" or ext == "jpeg": result = _load_custom(path, image, ImageType.PNG)
-		if result[0] != OK or result[1] == null or index != image_index:
-			thread.wait_to_finish.call_deferred()
-			return
-		image = result[1]
+	if PyCore.IsAnimation(path):
+		current_is_animation = true
+		update_animation_frame.call_deferred()
+		PyCore.LoadAnimation(path)
+	else:
+		current_is_animation = false
+		var image:Image = Image.new()
+		var error:int = image.load(path)
+		if error != OK or index != image_index:
+			var ext:String = path.get_extension().to_lower()
+			var result:Array = [-1, null]
+			if ext == "png" or ext == "jfif": result = _load_custom(path, image, ImageType.JPEG)
+			if ext == "jpg" or ext == "jpeg": result = _load_custom(path, image, ImageType.PNG)
+			if result[0] != OK or result[1] == null or index != image_index:
+				thread.wait_to_finish.call_deferred()
+				return
+			image = result[1]
+		
+		var texture:ImageTexture = ImageTexture.create_from_image(image)
+		if index == image_index: 
+			_finished.call_deferred(index, path, texture)
 	
-	var texture:ImageTexture = ImageTexture.create_from_image(image)
-	if index == image_index: 
-		_finished.call_deferred(index, path, texture)
 	thread.wait_to_finish.call_deferred()
 
 func _finished(index:int, path:String, texture:ImageTexture) -> void:
@@ -400,4 +420,56 @@ func _on_titlebar_gui_input(event:InputEvent) -> void:
 				_set_window_mode(Window.MODE_MAXIMIZED)
 				mouse_offset.x /= 2 # not perfect but better than 0,0  ;  will have to think about this
 			get_tree().root.position += Vector2i(ev.global_position) - mouse_offset
+#endregion
+
+#region Animation Variables
+var animation_frame_count:int = 1
+var animation_fps:int = 1
+var animation_delays:Array[float] = []
+var animation_frames:Array[ImageTexture] = []
+var animation_path:String = ""
+var current_frame:int = 0
+var current_is_animation:bool = false
+#endregion
+
+#region Animation Functions
+func set_animation_info(frame_count:int, fps:int, path:String) -> void:
+	animation_fps = fps
+	animation_frame_count = frame_count
+	animation_path = path.replace('\\', '/')
+
+func add_animation_frame(texture:ImageTexture, delay:float) -> void:
+	animation_frames.append(texture)
+	animation_delays.append(delay)
+
+func update_animation_frame() -> void:
+	# reset variables and return if image changed
+	#if animation_path != get_current_path():# and (animation_path != "" and current_is_animation):
+	if not current_is_animation or (current_is_animation and animation_path != "" and animation_path != get_current_path()):
+		animation_frames.clear()
+		animation_delays.clear()
+		animation_path = ""
+		animation_frame_count = 1
+		animation_fps = 1
+		current_frame = 0
+		return
+	
+	# delay until image changed or next frame ready
+	if current_frame >= animation_frames.size():
+		get_tree().create_timer(0.1).timeout.connect(update_animation_frame)
+		return
+	
+	# get the current frame and delay
+	var frame:ImageTexture = animation_frames[current_frame]
+	var delay:float = animation_delays[current_frame]
+	
+	# set the frame and delay
+	image_dimensions = frame.get_image().get_size()
+	update_ui(animation_path.get_file(), image_dimensions)
+	display.change_image(frame, image_dimensions.x as float / image_dimensions.y)
+	get_tree().create_timer(delay).timeout.connect(update_animation_frame)
+	current_frame += 1
+	if current_frame == animation_frame_count:
+		current_frame = 0
+
 #endregion
