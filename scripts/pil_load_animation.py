@@ -34,7 +34,7 @@ def get_frames(path):
     csharp.SendImageInfo(f'{frame_count}?{path}')
     
     type = 'jpeg'
-    if has_transparency(img):
+    if has_transparency(img) or img.mode == 'RGBA' or img.mode == 'RAW':
         type = 'webp'
     
     for i in range(0, frame_count):
