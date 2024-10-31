@@ -32,6 +32,7 @@ var full_space_percent:Vector2 = Vector2(0.995, 0.95) # how close to Right/Botto
 #region Variables
 var titlebar_mode:TitlebarMode = TitlebarMode.FAKE
 var space_mode:SpaceMode = SpaceMode.MINIMAL
+var maximized:bool = false
 var image_index:int = 0
 var image_dimensions:Vector2i = Vector2i.ZERO
 var image_paths:Array[String] = []
@@ -124,14 +125,17 @@ func _set_window_mode(mode:int) -> void:
 		get_tree().root.mode = Window.MODE_WINDOWED
 	if mode == Window.MODE_MAXIMIZED:
 		# if windowed or fullscreen; set to maximized
-		if curr_mode != Window.MODE_MAXIMIZED:
-			get_tree().root.mode = Window.MODE_MAXIMIZED
+		if not maximized:
+			# godot maximize mode seems broken on 2nd screen (at least just setting mode to MODE_MAXIMIZED is not enough)
+			var new_pos:Vector2i = DisplayServer.screen_get_position()
+			var new_size:Vector2i = DisplayServer.screen_get_usable_rect().size
+			get_tree().root.position = new_pos
+			get_tree().root.size = new_size
 			maximize.icon = win_icon
 		else:
-			# does not unmaximize by default; fix by setting to fullscreen first
-			get_tree().root.mode = Window.MODE_FULLSCREEN
-			get_tree().root.mode = Window.MODE_WINDOWED
+			resize_window()
 			maximize.icon = max_icon
+		maximized = not maximized
 	elif mode == Window.MODE_FULLSCREEN:
 		# if maximized or windowed; set to fullscreen
 		if curr_mode != Window.MODE_FULLSCREEN:
@@ -378,7 +382,7 @@ func _on_titlebar_gui_input(event:InputEvent) -> void:
 	elif event is InputEventMouseMotion:
 		var ev:InputEventMouseMotion = event as InputEventMouseMotion
 		if dragging: 
-			if get_tree().root.mode == Window.MODE_MAXIMIZED:
+			if maximized:
 				_set_window_mode(Window.MODE_MAXIMIZED)
 			get_tree().root.position += Vector2i(ev.relative)
 			# prevent glitch where it rapidly alternates between 2 positions
