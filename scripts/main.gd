@@ -127,10 +127,8 @@ func _set_window_mode(mode:int) -> void:
 		# if windowed or fullscreen; set to maximized
 		if not maximized:
 			# godot maximize mode seems broken on 2nd screen (at least just setting mode to MODE_MAXIMIZED is not enough)
-			var new_pos:Vector2i = DisplayServer.screen_get_position()
-			var new_size:Vector2i = DisplayServer.screen_get_usable_rect().size
-			get_tree().root.position = new_pos
-			get_tree().root.size = new_size
+			get_tree().root.position = DisplayServer.screen_get_position()
+			get_tree().root.size = DisplayServer.screen_get_usable_rect().size
 			maximize.icon = win_icon
 		else:
 			resize_window()
