@@ -30,6 +30,7 @@ var full_space_percent:Vector2 = Vector2(0.995, 0.95) # how close to Right/Botto
 #endregion
 
 #region Variables
+var timer:Timer = Timer.new()
 var titlebar_mode:TitlebarMode = TitlebarMode.FAKE
 var space_mode:SpaceMode = SpaceMode.MINIMAL
 var maximized:bool = false
@@ -46,6 +47,10 @@ func _ready() -> void:
 	get_tree().root.ready.connect(_load_cmdline_image)
 	Globals.prev_pressed.connect(prev_image)
 	Globals.next_pressed.connect(next_image)
+	
+	timer.one_shot = true
+	timer.wait_time = 0.25
+	add_child(timer)
 	
 	# update when window resizes
 	var screen_size:Vector2i = DisplayServer.screen_get_size()
@@ -132,15 +137,10 @@ func _set_window_mode(mode:int) -> void:
 		get_tree().root.mode = Window.MODE_WINDOWED
 	if mode == Window.MODE_MAXIMIZED:
 		# if windowed or fullscreen; set to maximized
-		if not maximized:
-			# godot maximize mode seems broken on 2nd screen (at least just setting mode to MODE_MAXIMIZED is not enough)
-			get_tree().root.position = DisplayServer.screen_get_position()
-			get_tree().root.size = DisplayServer.screen_get_usable_rect().size
-			maximize.icon = win_icon
-		else:
-			resize_window()
-			maximize.icon = max_icon
 		maximized = not maximized
+		if maximized: maximize.icon = win_icon
+		else: maximize.icon = max_icon
+		resize_window()
 	elif mode == Window.MODE_FULLSCREEN:
 		# if maximized or windowed; set to fullscreen
 		if curr_mode != Window.MODE_FULLSCREEN:
@@ -176,6 +176,11 @@ func calc_image_aspect() -> float:
 	return image_dimensions.x as float / image_dimensions.y
 
 func resize_window(too_large:bool=false) -> void:
+	if maximized:
+		get_tree().root.position = DisplayServer.screen_get_position()
+		get_tree().root.size = DisplayServer.screen_get_usable_rect().size
+		return
+	
 	var screen_size:Vector2i = DisplayServer.screen_get_size()
 	var window_max_size:Vector2i = screen_size * window_max_size_percent
 	var window_pos:Vector2i = _get_window_position()
@@ -383,10 +388,16 @@ func _on_titlebar_gui_input(event:InputEvent) -> void:
 		elif ev.button_index == MOUSE_BUTTON_LEFT: 
 			dragging = true
 			mouse_offset = ev.global_position
+			if timer.is_stopped():
+				timer.start()
+			else:
+				dragging = false
+				_set_window_mode(Window.MODE_MAXIMIZED)
 	elif event is InputEventMouseMotion:
 		var ev:InputEventMouseMotion = event as InputEventMouseMotion
-		if dragging: 
-			if maximized:
+		if dragging:
+			if maximized and timer.is_stopped():
 				_set_window_mode(Window.MODE_MAXIMIZED)
+				mouse_offset.x /= 2 # not perfect but better than 0,0  ;  will have to think about this
 			get_tree().root.position += Vector2i(ev.global_position) - mouse_offset
 #endregion
