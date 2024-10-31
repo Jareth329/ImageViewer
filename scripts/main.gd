@@ -76,6 +76,13 @@ func _unhandled_input(event:InputEvent) -> void:
 		elif ev.keycode == KEY_F3: _toggle_view_margin()
 		elif ev.keycode == KEY_F5: refresh_list()
 		elif ev.keycode == KEY_F11 or ev.keycode == KEY_F4: _set_window_mode(Window.MODE_FULLSCREEN)
+	# handle cases where l-click is released while fake titlebar no longer has focus
+	elif event is InputEventMouseButton:
+		var ev:InputEventMouseButton = event as InputEventMouseButton
+		if not ev.pressed and dragging and ev.button_index == MOUSE_BUTTON_LEFT:
+			dragging = false
+			mouse_offset = Vector2i.ZERO
+			resize_window()
 #endregion
 
 #region User Interface
@@ -153,17 +160,14 @@ func update_ui(image_name:String, image_dims:Vector2) -> void:
 		resize_window()
 
 func _get_window_position() -> Vector2i:
-	var curr_screen_size:Vector2i = DisplayServer.screen_get_size()
-	var window_pos:Vector2i = DisplayServer.window_get_position()
-	var screen:int = 0
-	while window_pos.x > curr_screen_size.x:
-		window_pos.x -= DisplayServer.screen_get_size(screen).x
-		screen += 1
-	screen = 0
-	while window_pos.y > curr_screen_size.y:
-		window_pos.y -= DisplayServer.screen_get_size(screen).y
-		screen += 1
-	return window_pos
+	var window_origin:Vector2i = DisplayServer.window_get_position()
+	for screen in DisplayServer.get_screen_count():
+		var screen_pos:Vector2i = DisplayServer.screen_get_position(screen)
+		var screen_size:Vector2i = DisplayServer.screen_get_size(screen)
+		var screen_rect:Rect2i = Rect2i(screen_pos, screen_size)
+		if screen_rect.has_point(window_origin):
+			return get_tree().root.position - DisplayServer.screen_get_position(screen)
+	return Vector2i.ZERO
 
 func calc_image_aspect() -> float:
 	if titlebar.visible:
@@ -175,7 +179,6 @@ func resize_window(too_large:bool=false) -> void:
 	var screen_size:Vector2i = DisplayServer.screen_get_size()
 	var window_max_size:Vector2i = screen_size * window_max_size_percent
 	var window_pos:Vector2i = _get_window_position()
-	
 	if too_large or space_mode != SpaceMode.MINIMAL:
 		window_max_size = Vector2(screen_size - window_pos) * full_space_percent
 	
@@ -369,23 +372,21 @@ func _on_close_pressed() -> void:
 	get_tree().quit()
 
 var dragging:bool = false
+var mouse_offset:Vector2i = Vector2i.ZERO
 func _on_titlebar_gui_input(event:InputEvent) -> void:
 	if event is InputEventMouseButton:
 		var ev:InputEventMouseButton = event as InputEventMouseButton
 		if not ev.pressed: # prevent events from firing twice
 			dragging = false
+			mouse_offset = Vector2i.ZERO
 			resize_window()
 		elif ev.button_index == MOUSE_BUTTON_LEFT: 
 			dragging = true
+			mouse_offset = ev.global_position
 	elif event is InputEventMouseMotion:
 		var ev:InputEventMouseMotion = event as InputEventMouseMotion
 		if dragging: 
 			if maximized:
 				_set_window_mode(Window.MODE_MAXIMIZED)
-			get_tree().root.position += Vector2i(ev.relative)
-			# prevent glitch where it rapidly alternates between 2 positions
-			var tb_center:Vector2 = (titlebar.size - titlebar.position) / 2
-			tb_center *= 1.5
-			if ev.relative.x > tb_center.x or ev.relative.y > tb_center.y:
-				dragging = false
+			get_tree().root.position += Vector2i(ev.global_position) - mouse_offset
 #endregion
