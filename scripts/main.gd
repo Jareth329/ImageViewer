@@ -162,7 +162,7 @@ func update_ui(image_name:String, image_dims:Vector2) -> void:
 	get_tree().root.title = title
 	fake_title.text = title
 	
-	if reset_camera_on_image_change: 
+	if reset_camera_on_image_change and not current_is_animation: 
 		display.reset_camera_state()
 	
 	if get_tree().root.mode == Window.MODE_WINDOWED:
@@ -289,9 +289,13 @@ func change_image(path:String) -> void:
 		return
 	
 	if PyCore.IsAnimation(path):
+		current_is_animation = true
 		print("ANIMATION")
-	
+		# since it does not update on each frame
+		if reset_camera_on_image_change:
+			display.reset_camera_state()
 	else:
+		current_is_animation = false
 		if not FileAccess.file_exists(path): return
 		var image:Image = Image.new()
 		var error:int = image.load(path)
@@ -430,6 +434,7 @@ var animation_frames:Array[ImageTexture] = []
 var animation_path:String = ""
 var current_frame:int = 0
 var current_is_animation:bool = false
+var first_frame:bool = true
 #endregion
 
 #region Animation Functions
@@ -452,12 +457,18 @@ func update_animation_frame() -> void:
 		animation_frame_count = 1
 		animation_fps = 1
 		current_frame = 0
+		first_frame = true
 		return
 	
 	# delay until image changed or next frame ready
 	if current_frame >= animation_frames.size():
 		get_tree().create_timer(0.1).timeout.connect(update_animation_frame)
 		return
+	if first_frame:
+		# since it does not update on each frame
+		if reset_camera_on_image_change:
+			display.reset_camera_state()
+	first_frame = false
 	
 	# get the current frame and delay
 	var frame:ImageTexture = animation_frames[current_frame]
