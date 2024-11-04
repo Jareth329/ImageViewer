@@ -90,7 +90,7 @@ func _unhandled_input(event:InputEvent) -> void:
 		elif ev.keycode == KEY_F2: _update_titlebar_visibility()
 		elif ev.keycode == KEY_F3: _toggle_view_margin()
 		elif ev.keycode == KEY_F5: refresh_list()
-		elif ev.keycode == KEY_F11 or ev.keycode == KEY_F4: _set_window_mode(Window.MODE_FULLSCREEN)
+		elif ev.keycode == KEY_F11 or ev.keycode == KEY_F4: _set_window_mode(Window.MODE_EXCLUSIVE_FULLSCREEN)
 	# handle cases where l-click is released while fake titlebar no longer has focus
 	elif event is InputEventMouseButton:
 		var ev:InputEventMouseButton = event as InputEventMouseButton
@@ -145,16 +145,19 @@ func _set_window_mode(mode:int) -> void:
 	# set actual mode to Windowed to prevent screen bugs
 	if curr_mode != Window.MODE_WINDOWED:
 		get_tree().root.mode = Window.MODE_WINDOWED
+		if titlebar_mode == TitlebarMode.FAKE:
+			titlebar.visible = true
 	if mode == Window.MODE_MAXIMIZED:
 		# if windowed or fullscreen; set to maximized
 		maximized = not maximized
 		if maximized: maximize.icon = win_icon
 		else: maximize.icon = max_icon
 		resize_window()
-	elif mode == Window.MODE_FULLSCREEN:
+	elif mode == Window.MODE_EXCLUSIVE_FULLSCREEN:
 		# if maximized or windowed; set to fullscreen
-		if curr_mode != Window.MODE_FULLSCREEN:
+		if curr_mode != Window.MODE_EXCLUSIVE_FULLSCREEN:
 			get_tree().root.mode = Window.MODE_EXCLUSIVE_FULLSCREEN
+			titlebar.visible = false
 		else:
 			get_tree().root.mode = Window.MODE_WINDOWED
 
@@ -190,6 +193,9 @@ func resize_window(too_large:bool=false) -> void:
 		get_tree().root.position = DisplayServer.screen_get_position()
 		get_tree().root.size = DisplayServer.screen_get_usable_rect().size
 		return
+	
+	if get_tree().root.mode == Window.MODE_EXCLUSIVE_FULLSCREEN:
+		_set_window_mode(Window.MODE_WINDOWED)
 	
 	var screen_size:Vector2i = DisplayServer.screen_get_size()
 	var window_max_size:Vector2i = screen_size * window_max_size_percent
@@ -264,7 +270,7 @@ func _files_dropped(paths:PackedStringArray) -> void:
 		if not FileAccess.file_exists(path): continue
 		var extension:String = path.get_extension().to_lower()
 		if not supported_formats.has(extension): continue
-		tmp_paths.append(path)
+		tmp_paths.append(path.replace('\\', '/').replace("//", "/"))
 	
 	if tmp_paths.size() == 1:
 		var path:String = tmp_paths[0]
@@ -296,30 +302,6 @@ func change_image(path:String) -> void:
 		load_image(image_index, path)
 		return
 	
-<<<<<<< Updated upstream
-	if PyCore.IsAnimation(path):
-		current_is_animation = true
-		print("ANIMATION")
-=======
-<<<<<<< Updated upstream
-	if not FileAccess.file_exists(path): return
-	var image:Image = Image.new()
-	var error:int = image.load(path)
-	if error != OK: 
-		var ext:String = path.get_extension().to_lower()
-		var result:Array = [-1, null]
-		if ext == "png" or ext == "jfif": result = _load_custom(path, image, ImageType.JPEG)
-		if ext == "jpg" or ext == "jpeg": result = _load_custom(path, image, ImageType.PNG)
-		if result[0] != OK or result[1] == null:
-			return
-		image = result[1]
-	
-	var texture:ImageTexture = ImageTexture.create_from_image(image)
-	if use_history: add_to_history(path, texture)
-	image_dimensions = image.get_size()
-	update_ui(path.get_file(), image_dimensions)
-	display.change_image(texture, image_dimensions.x as float / image_dimensions.y)
-=======
 	var _res:String = PyCore.IsAnimation(path)
 	var res:PackedStringArray = _res.split("?")
 	current_is_animation = true if res[0] == "T" else false
@@ -335,15 +317,10 @@ func change_image(path:String) -> void:
 	history_color[path] = color
 	
 	if current_is_animation:
->>>>>>> Stashed changes
 		# since it does not update on each frame
 		if reset_camera_on_image_change:
 			display.reset_camera_state()
 	else:
-<<<<<<< Updated upstream
-		current_is_animation = false
-=======
->>>>>>> Stashed changes
 		if not FileAccess.file_exists(path): return
 		var image:Image = Image.new()
 		var error:int = image.load(path)
@@ -361,10 +338,6 @@ func change_image(path:String) -> void:
 		image_dimensions = image.get_size()
 		update_ui(path.get_file(), image_dimensions)
 		display.change_image(texture, image_dimensions.x as float / image_dimensions.y)
-<<<<<<< Updated upstream
-=======
->>>>>>> Stashed changes
->>>>>>> Stashed changes
 
 func _load_custom(path:String, image:Image, type:ImageType) -> Array:
 	var err:int = -1
@@ -408,27 +381,6 @@ func _load_image(index:int, path:String, thread:Thread) -> void:
 		thread.wait_to_finish.call_deferred()
 		return
 	
-<<<<<<< Updated upstream
-	if PyCore.IsAnimation(path):
-		current_is_animation = true
-		update_animation_frame.call_deferred()
-		PyCore.LoadAnimation(path)
-	else:
-		current_is_animation = false
-=======
-<<<<<<< Updated upstream
-	var image:Image = Image.new()
-	var error:int = image.load(path)
-	if error != OK or index != image_index:
-		var ext:String = path.get_extension().to_lower()
-		var result:Array = [-1, null]
-		if ext == "png" or ext == "jfif": result = _load_custom(path, image, ImageType.JPEG)
-		if ext == "jpg" or ext == "jpeg": result = _load_custom(path, image, ImageType.PNG)
-		if result[0] != OK or result[1] == null or index != image_index:
-			thread.wait_to_finish.call_deferred()
-			return
-		image = result[1]
-=======
 	var _res:String = PyCore.IsAnimation(path)
 	var res:PackedStringArray = _res.split("?")
 	current_is_animation = true if res[0] == "T" else false
@@ -447,7 +399,6 @@ func _load_image(index:int, path:String, thread:Thread) -> void:
 		update_animation_frame.call_deferred()
 		PyCore.LoadAnimation(path)
 	else:
->>>>>>> Stashed changes
 		var image:Image = Image.new()
 		var error:int = image.load(path)
 		if error != OK or index != image_index:
@@ -463,10 +414,6 @@ func _load_image(index:int, path:String, thread:Thread) -> void:
 		var texture:ImageTexture = ImageTexture.create_from_image(image)
 		if index == image_index: 
 			_finished.call_deferred(index, path, texture)
-<<<<<<< Updated upstream
-=======
->>>>>>> Stashed changes
->>>>>>> Stashed changes
 	
 	thread.wait_to_finish.call_deferred()
 
