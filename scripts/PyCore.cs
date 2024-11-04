@@ -24,7 +24,11 @@ public partial class PyCore:Node
         }
     }
 
+<<<<<<< Updated upstream
     internal static bool IsAnimation(string path)
+=======
+    internal static string IsAnimation(string path)
+>>>>>>> Stashed changes
     {
         const string pyScript = "pil_load_animation";
         using (Py.GIL())
@@ -33,12 +37,20 @@ public partial class PyCore:Node
             {
                 dynamic script = Py.Import(pyScript);
                 dynamic _result = script.is_animation(path);
+<<<<<<< Updated upstream
                 return (bool)_result;
+=======
+                return (string)_result;
+>>>>>>> Stashed changes
             }
             catch (PythonException pye)
             {
                 GD.Print(pye);
+<<<<<<< Updated upstream
                 return false;
+=======
+                return "F?null";
+>>>>>>> Stashed changes
             }
         }
     }

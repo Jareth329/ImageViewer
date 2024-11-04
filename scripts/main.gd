@@ -39,6 +39,7 @@ var image_dimensions:Vector2i = Vector2i.ZERO
 var image_paths:Array[String] = []
 var history_queue:Array[String] = []
 var history:Dictionary = {} # String(path) : ImageTexture(image)
+var history_color:Dictionary = {} # string(path) : Color(bg_color)
 #endregion
 
 func get_current_path() -> String:
@@ -276,26 +277,73 @@ func _files_dropped(paths:PackedStringArray) -> void:
 		image_index = 0
 		Globals.update_counter.emit(image_index + 1, image_paths.size())
 
+func update_bg_color(color:Color) -> void:
+	$vbox/margin/color.color = color
+	#print(color)
+
 func change_image(path:String) -> void:
 	if use_history and history.has(path) and history[path] is ImageTexture:
 		var _texture:ImageTexture = history[path] as ImageTexture
 		image_dimensions = _texture.get_image().get_size()
 		update_ui(path.get_file(), image_dimensions)
 		display.change_image(_texture, image_dimensions.x as float / image_dimensions.y)
+		if history_color.has(path):
+			var color:Color = history_color[path]
+			update_bg_color(color)
 		return 
 	
 	if use_threading: 
 		load_image(image_index, path)
 		return
 	
+<<<<<<< Updated upstream
 	if PyCore.IsAnimation(path):
 		current_is_animation = true
 		print("ANIMATION")
+=======
+<<<<<<< Updated upstream
+	if not FileAccess.file_exists(path): return
+	var image:Image = Image.new()
+	var error:int = image.load(path)
+	if error != OK: 
+		var ext:String = path.get_extension().to_lower()
+		var result:Array = [-1, null]
+		if ext == "png" or ext == "jfif": result = _load_custom(path, image, ImageType.JPEG)
+		if ext == "jpg" or ext == "jpeg": result = _load_custom(path, image, ImageType.PNG)
+		if result[0] != OK or result[1] == null:
+			return
+		image = result[1]
+	
+	var texture:ImageTexture = ImageTexture.create_from_image(image)
+	if use_history: add_to_history(path, texture)
+	image_dimensions = image.get_size()
+	update_ui(path.get_file(), image_dimensions)
+	display.change_image(texture, image_dimensions.x as float / image_dimensions.y)
+=======
+	var _res:String = PyCore.IsAnimation(path)
+	var res:PackedStringArray = _res.split("?")
+	current_is_animation = true if res[0] == "T" else false
+	var bg_color:String = res[1]
+	bg_color = bg_color.substr(1, bg_color.length()-2)
+	var _color_parts:PackedStringArray = bg_color.split(", ")
+	var color_parts:Array[int] = []
+	for c:String in _color_parts:
+		color_parts.append(float(c))
+	var color:Color = Color(color_parts[0]/255, color_parts[1]/255, color_parts[2]/255)
+	# if auto_change_bg_color:
+	update_bg_color(color)
+	history_color[path] = color
+	
+	if current_is_animation:
+>>>>>>> Stashed changes
 		# since it does not update on each frame
 		if reset_camera_on_image_change:
 			display.reset_camera_state()
 	else:
+<<<<<<< Updated upstream
 		current_is_animation = false
+=======
+>>>>>>> Stashed changes
 		if not FileAccess.file_exists(path): return
 		var image:Image = Image.new()
 		var error:int = image.load(path)
@@ -313,6 +361,10 @@ func change_image(path:String) -> void:
 		image_dimensions = image.get_size()
 		update_ui(path.get_file(), image_dimensions)
 		display.change_image(texture, image_dimensions.x as float / image_dimensions.y)
+<<<<<<< Updated upstream
+=======
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
 
 func _load_custom(path:String, image:Image, type:ImageType) -> Array:
 	var err:int = -1
@@ -356,12 +408,46 @@ func _load_image(index:int, path:String, thread:Thread) -> void:
 		thread.wait_to_finish.call_deferred()
 		return
 	
+<<<<<<< Updated upstream
 	if PyCore.IsAnimation(path):
 		current_is_animation = true
 		update_animation_frame.call_deferred()
 		PyCore.LoadAnimation(path)
 	else:
 		current_is_animation = false
+=======
+<<<<<<< Updated upstream
+	var image:Image = Image.new()
+	var error:int = image.load(path)
+	if error != OK or index != image_index:
+		var ext:String = path.get_extension().to_lower()
+		var result:Array = [-1, null]
+		if ext == "png" or ext == "jfif": result = _load_custom(path, image, ImageType.JPEG)
+		if ext == "jpg" or ext == "jpeg": result = _load_custom(path, image, ImageType.PNG)
+		if result[0] != OK or result[1] == null or index != image_index:
+			thread.wait_to_finish.call_deferred()
+			return
+		image = result[1]
+=======
+	var _res:String = PyCore.IsAnimation(path)
+	var res:PackedStringArray = _res.split("?")
+	current_is_animation = true if res[0] == "T" else false
+	var bg_color:String = res[1]
+	bg_color = bg_color.substr(1, bg_color.length()-2)
+	var _color_parts:PackedStringArray = bg_color.split(", ")
+	var color_parts:Array[float] = []
+	for c:String in _color_parts:
+		color_parts.append(float(c))
+	var color:Color = Color(color_parts[0]/255, color_parts[1]/255, color_parts[2]/255)
+	# if auto_change_bg_color:
+	update_bg_color.call_deferred(color)
+	history_color[path] = color
+	
+	if current_is_animation:
+		update_animation_frame.call_deferred()
+		PyCore.LoadAnimation(path)
+	else:
+>>>>>>> Stashed changes
 		var image:Image = Image.new()
 		var error:int = image.load(path)
 		if error != OK or index != image_index:
@@ -377,6 +463,10 @@ func _load_image(index:int, path:String, thread:Thread) -> void:
 		var texture:ImageTexture = ImageTexture.create_from_image(image)
 		if index == image_index: 
 			_finished.call_deferred(index, path, texture)
+<<<<<<< Updated upstream
+=======
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
 	
 	thread.wait_to_finish.call_deferred()
 
