@@ -80,7 +80,7 @@ func _unhandled_input(event:InputEvent) -> void:
 		elif ev.keycode == KEY_F2: _update_titlebar_visibility()
 		elif ev.keycode == KEY_F3: _toggle_view_margin()
 		elif ev.keycode == KEY_F5: refresh_list()
-		elif ev.keycode == KEY_F11 or ev.keycode == KEY_F4: _set_window_mode(Window.MODE_FULLSCREEN)
+		elif ev.keycode == KEY_F11 or ev.keycode == KEY_F4: _set_window_mode(Window.MODE_EXCLUSIVE_FULLSCREEN)
 	# handle cases where l-click is released while fake titlebar no longer has focus
 	elif event is InputEventMouseButton:
 		var ev:InputEventMouseButton = event as InputEventMouseButton
@@ -135,16 +135,19 @@ func _set_window_mode(mode:int) -> void:
 	# set actual mode to Windowed to prevent screen bugs
 	if curr_mode != Window.MODE_WINDOWED:
 		get_tree().root.mode = Window.MODE_WINDOWED
+		if titlebar_mode == TitlebarMode.FAKE:
+			titlebar.visible = true
 	if mode == Window.MODE_MAXIMIZED:
 		# if windowed or fullscreen; set to maximized
 		maximized = not maximized
 		if maximized: maximize.icon = win_icon
 		else: maximize.icon = max_icon
 		resize_window()
-	elif mode == Window.MODE_FULLSCREEN:
+	elif mode == Window.MODE_EXCLUSIVE_FULLSCREEN:
 		# if maximized or windowed; set to fullscreen
-		if curr_mode != Window.MODE_FULLSCREEN:
+		if curr_mode != Window.MODE_EXCLUSIVE_FULLSCREEN:
 			get_tree().root.mode = Window.MODE_EXCLUSIVE_FULLSCREEN
+			titlebar.visible = false
 		else:
 			get_tree().root.mode = Window.MODE_WINDOWED
 
@@ -180,6 +183,9 @@ func resize_window(too_large:bool=false) -> void:
 		get_tree().root.position = DisplayServer.screen_get_position()
 		get_tree().root.size = DisplayServer.screen_get_usable_rect().size
 		return
+	
+	if get_tree().root.mode == Window.MODE_EXCLUSIVE_FULLSCREEN:
+		_set_window_mode(Window.MODE_WINDOWED)
 	
 	var screen_size:Vector2i = DisplayServer.screen_get_size()
 	var window_max_size:Vector2i = screen_size * window_max_size_percent
@@ -254,7 +260,7 @@ func _files_dropped(paths:PackedStringArray) -> void:
 		if not FileAccess.file_exists(path): continue
 		var extension:String = path.get_extension().to_lower()
 		if not supported_formats.has(extension): continue
-		tmp_paths.append(path)
+		tmp_paths.append(path.replace('\\', '/').replace("//", "/"))
 	
 	if tmp_paths.size() == 1:
 		var path:String = tmp_paths[0]

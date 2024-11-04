@@ -33,3 +33,4 @@ stretch_mode = 5
 [node name="viewport_camera" type="Camera2D" parent="viewport"]
 position = Vector2(1280, 720)
 ignore_rotation = false
+editor_draw_screen = false
