@@ -17,6 +17,9 @@ class_name Display extends TextureRect
 # should probably add a toggle key + setting to have scroll switch between zoom and skipping to next image,
 #	maybe even default it to next image since there is alt way of zooming now
 
+# it would be better to eventually change to using the InputMap and have remappable hotkeys for actions
+# instead of the current hard-coded keys
+
 # trying to open multiple images at once opens multiple instances, which is inline with other 
 # image viewers and ensures this code will work fine in correct use cases, just need to add 
 # popup for error images and remove their path from the array
@@ -149,6 +152,7 @@ func _on_gui_input(event:InputEvent) -> void:
 			rotating = false
 			fast_zooming = false
 			return
+		
 		# if on Z mode (take up all horizontal space); should swap normal and shift inputs
 		elif ev.button_index == MOUSE_BUTTON_WHEEL_UP:
 			if ctrl_pressed:
@@ -158,6 +162,7 @@ func _on_gui_input(event:InputEvent) -> void:
 				else: Globals.prev_pressed.emit(1)
 			elif shift_pressed: camera.offset.y -= pan_speed * 280
 			else: Globals.prev_pressed.emit(1) # change image
+		
 		elif ev.button_index == MOUSE_BUTTON_WHEEL_DOWN:
 			if ctrl_pressed:
 				if allow_zoom and use_scrollwheel: # zoom out
@@ -166,9 +171,11 @@ func _on_gui_input(event:InputEvent) -> void:
 				else: Globals.next_pressed.emit(1)
 			elif shift_pressed: camera.offset.y += pan_speed * 280
 			else: Globals.next_pressed.emit(1) # change image 
+		
 		elif ev.button_index == MOUSE_BUTTON_LEFT: panning = true
 		elif ev.button_index == MOUSE_BUTTON_MIDDLE: fast_zooming = true
 		elif ev.button_index == MOUSE_BUTTON_RIGHT: rotating = true
+	
 	elif event is InputEventMouseMotion:
 		var ev:InputEventMouseMotion = event as InputEventMouseMotion
 		if allow_pan and panning: pan(ev.relative)
