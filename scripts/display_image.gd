@@ -149,6 +149,7 @@ func _on_gui_input(event:InputEvent) -> void:
 			rotating = false
 			fast_zooming = false
 			return
+		# if on Z mode (take up all horizontal space); should swap normal and shift inputs
 		elif ev.button_index == MOUSE_BUTTON_WHEEL_UP:
 			if ctrl_pressed:
 				if allow_zoom and use_scrollwheel: # zoom in

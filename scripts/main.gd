@@ -272,6 +272,7 @@ func _files_dropped(paths:PackedStringArray) -> void:
 		if not supported_formats.has(extension): continue
 		tmp_paths.append(path.replace('\\', '/').replace("//", "/"))
 	
+	# should probably set a custom variable instead of 1 that user can change
 	if tmp_paths.size() == 1:
 		var path:String = tmp_paths[0]
 		create_paths_array(path)
